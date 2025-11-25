@@ -1,6 +1,12 @@
 import { User } from 'src/components/user/entities/user.entity';
 import { Shop } from '../../../components/shop/entity/shop.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { InfluencerProfile } from 'src/components/influencers/entities/influencer.entity';
 
 @Entity('products')
@@ -30,9 +36,11 @@ export class Product {
   influencerId: string;
 
   @ManyToOne(() => Shop, (shop) => shop.products)
+  @JoinColumn({ name: 'shopId' })
   shop: Shop;
 
   @ManyToOne(() => InfluencerProfile, (influencer) => influencer.products)
+  @JoinColumn({ name: 'influencerId' })
   influencer: InfluencerProfile;
 
   @Column({ nullable: true })

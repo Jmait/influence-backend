@@ -97,7 +97,10 @@ export class UserService {
   }
 
   async findUserByEmail(email: string) {
-    return await this.userRepo.findOne({ where: { email } });
+    return await this.userRepo.findOne({
+      where: { email },
+      relations: ['influencerProfile'],
+    });
   }
 
   buildProfileSearchFilter(query: any) {
@@ -185,12 +188,19 @@ export class UserService {
     }
   }
 
-  async getInflucerPublicProfile(userId: string) {
+  async getInflucerPublicProfile(influencerId: string) {
     try {
-      const user = await this.userRepo.findOne({
-        where: { userId },
-        relations: ['influencerProfile'],
-      });
+      const user = await this.influencerRepo
+        .createQueryBuilder('influencer')
+        .leftJoinAndSelect('influencer.user', 'user')
+        // .leftJoinAndSelect('influencer.category', 'category')
+        // .leftJoinAndSelect('influencer.subCategory', 'subCategory')
+        .leftJoinAndSelect('influencer.shops', 'shops')
+        .where('influencer.influencerProfileId = :influencerId', {
+          influencerId,
+        })
+
+        .getOne();
       return user;
     } catch (error) {
       throw new BadRequestException(error.message);

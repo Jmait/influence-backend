@@ -13,8 +13,12 @@ export class InfluencerController {
     return await this.influencerService.getInfluencerProfile(dto);
   }
 
-  @Get(':userId')
-  async getInfluencerSingleProfile(@Param('userId') userId: string) {
-    return await this.influencerService.getInfluencerPublicProfile(userId);
+  @Get(':influencerId')
+  async getInfluencerSingleProfile(
+    @Param('influencerId') influencerId: string,
+  ) {
+    const result =
+      await this.influencerService.getInfluencerPublicProfile(influencerId);
+    return { result };
   }
 }

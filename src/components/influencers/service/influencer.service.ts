@@ -16,7 +16,9 @@ export class InfluencerService {
 
   async getInfluencerPublicProfile(userId: string) {
     try {
-      return await this.userService.getInflucerPublicProfile(userId);
+      const profile = await this.userService.getInflucerPublicProfile(userId);
+      console.log('Fetched influencer profile:', profile);
+      return profile;
     } catch (error) {
       throw new BadRequestException(error.message);
     }

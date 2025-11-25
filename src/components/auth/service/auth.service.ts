@@ -79,8 +79,10 @@ export class AuthService {
       if (!isPasswordValid) {
         throw new BadRequestException(INVALID_PASSWORD);
       }
+      console.log('User logged in:', user.influencerProfile);
       const token = this.generateToken({
         user,
+        influencerProfileId: user.influencerProfile?.influencerProfileId,
       });
       return { token, user };
     } catch (error) {
@@ -120,9 +122,8 @@ export class AuthService {
       });
     }
     const token = this.generateToken({
-      userId: user.userId,
-      type: user.type,
-      email: user.email,
+      user: user,
+      influencerProfile: user.influencerProfile,
     });
     return { token, user };
   }

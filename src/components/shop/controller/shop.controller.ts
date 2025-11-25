@@ -1,9 +1,22 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CreateShopDto } from '../dto/shop.dto';
+import { ShopService } from '../service/shop.service';
+import { JwtGuard } from 'src/components/auth/guards/jwt.guard';
+import type { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
 
 @ApiTags('Shop Management')
 @Controller('shop')
 export class ShopController {
+  constructor(private readonly shopService: ShopService) {}
   @Get()
   findAll() {
     // Return all shops
@@ -16,10 +29,21 @@ export class ShopController {
     return `This action returns shop #${id}`;
   }
 
+  @ApiBearerAuth('Bearer')
   @Post()
-  create(@Body() createShopDto: any) {
-    // Create a new shop
-    return 'This action adds a new shop';
+  @UseGuards(JwtGuard)
+  create(
+    @Body() createShopDto: CreateShopDto,
+    @Req() req: ProfileRequestOptions,
+  ) {
+    const result = this.shopService.createShop(createShopDto, req);
+    return result;
+  }
+
+  @Get('influencer/:influencerId')
+  async getInfluencerShops(@Param('influencerId') influencerId: string) {
+    const result = await this.shopService.getInfluencerShops(influencerId);
+    return { result };
   }
 
   @Post('update/:id')

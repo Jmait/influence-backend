@@ -1,3 +1,4 @@
+import { PartialType } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateShopDto {
@@ -17,3 +18,5 @@ export class CreateShopDto {
   @IsNotEmpty()
   coverImage?: string;
 }
+
+export class UpdateShopDto extends PartialType(CreateShopDto) {}
