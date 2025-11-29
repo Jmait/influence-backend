@@ -10,8 +10,11 @@ import {
   OneToOne,
   JoinColumn,
   OneToMany,
+  ManyToOne,
 } from 'typeorm';
-import { Shop } from 'src/components/shop/entity/shop.entity';
+import { Shop } from '../../../components/shop/entity/shop.entity';
+import { InfluencerCategory } from 'src/components/influencer-category/entities/influencer-category.entity';
+import { Review } from '../../../components/reviews/entities/review.entity';
 
 @Entity('influencer_profiles')
 export class InfluencerProfile {
@@ -78,9 +81,18 @@ export class InfluencerProfile {
   @OneToMany(() => Product, (product) => product.influencer)
   products: Product[];
 
+  @OneToMany(() => Review, (review) => review.influencer)
+  reviews: Review[];
+
   @OneToMany(() => Shop, (shop) => shop.influencer)
   shops: Shop[];
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
+
+  @ManyToOne(() => InfluencerCategory, (category) => category.influencers, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'categoryId' })
+  category: InfluencerCategory;
 }

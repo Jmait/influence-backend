@@ -1,5 +1,6 @@
 import { InfluencerProfile } from 'src/components/influencers/entities/influencer.entity';
-import { Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Review } from 'src/components/reviews/entities/review.entity';
+import { Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Column } from 'typeorm';
 
 @Entity('users')
@@ -27,4 +28,7 @@ export class User {
     (influencerProfile) => influencerProfile.user,
   )
   influencerProfile: InfluencerProfile;
+
+  @OneToMany(() => Review, (review) => review.user)
+  reviews: Review[];
 }

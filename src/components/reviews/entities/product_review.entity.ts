@@ -1,5 +1,4 @@
 import { User } from 'src/components/user/entities/user.entity';
-import { InfluencerProfile } from '../../../components/influencers/entities/influencer.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -10,8 +9,8 @@ import {
   JoinColumn,
 } from 'typeorm';
 
-@Entity('reviews')
-export class Review {
+@Entity('product_reviews')
+export class ProductReview {
   @PrimaryGeneratedColumn('uuid')
   reviewId: string;
 
@@ -25,15 +24,11 @@ export class Review {
   userId: string;
 
   @Column({ type: 'uuid' })
-  influencerId: string;
+  productId: string;
 
   @ManyToOne(() => User, (user) => user.reviews)
   @JoinColumn({ name: 'userId' })
   user: User;
-
-  @ManyToOne(() => InfluencerProfile, (influencer) => influencer.reviews)
-  @JoinColumn({ name: 'influencerId' })
-  influencer: InfluencerProfile;
 
   @CreateDateColumn()
   createdAt: Date;

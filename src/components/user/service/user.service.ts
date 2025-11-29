@@ -5,7 +5,7 @@ import {
   UserType,
 } from 'src/components/auth/dto/auth.dto';
 import { User } from '../entities/user.entity';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
 import * as argon2 from 'argon2';
 import { InfluencerProfile } from 'src/components/influencers/entities/influencer.entity';
@@ -14,6 +14,7 @@ import {
   GetUserPublicrofileDto,
   SocialMedia,
 } from '../dto/user.dto';
+import { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
 
 @Injectable()
 export class UserService {
@@ -104,81 +105,205 @@ export class UserService {
   }
 
   buildProfileSearchFilter(query: any) {
-    const filter = {};
+    const where: { sql: string; params: any }[] = [];
 
+    // Username
     if (query.username) {
-      filter['user.username'] = query.username;
+      where.push({
+        sql: 'profile.username ILIKE :username',
+        params: { username: `%${query.username}%` },
+      });
     }
+
+    // First name
     if (query.firstName) {
-      filter['user.firstName'] = query.firstName;
+      where.push({
+        sql: 'user.firstName ILIKE :firstName',
+        params: { firstName: `%${query.firstName}%` },
+      });
     }
+
+    // Last name
     if (query.lastName) {
-      filter['user.lastName'] = query.lastName;
+      where.push({
+        sql: 'user.lastName ILIKE :lastName',
+        params: { lastName: `%${query.lastName}%` },
+      });
     }
+
+    // Single category
     if (query.categoryId) {
-      filter['influencerProfile.categoryId'] = query.categoryId;
+      where.push({
+        sql: 'profile.categoryId = :categoryId',
+        params: { categoryId: query.categoryId },
+      });
     }
+
+    // MULTIPLE categories
+    if (query.categoryIds?.length > 0) {
+      where.push({
+        sql: 'profile.categoryId IN (:...categoryIds)',
+        params: { categoryIds: query.categoryIds },
+      });
+    }
+
+    // Single subcategory
     if (query.subCategoryId) {
-      filter['influencerProfile.subCategoryId'] = query.subCategoryId;
+      where.push({
+        sql: 'profile.subCategoryId = :subCategoryId',
+        params: { subCategoryId: query.subCategoryId },
+      });
     }
+
+    // MULTIPLE subcategories
+    if (query.subCategoryIds?.length > 0) {
+      where.push({
+        sql: 'profile.subCategoryId IN (:...subCategoryIds)',
+        params: { subCategoryIds: query.subCategoryIds },
+      });
+    }
+
+    // Location
     if (query.location) {
-      filter['influencerProfile.location'] = query.location;
+      where.push({
+        sql: 'profile.location ILIKE :location',
+        params: { location: `%${query.location}%` },
+      });
     }
+
+    // Verified
     if (typeof query.verified === 'boolean') {
-      filter['influencerProfile.verified'] = query.verified;
+      where.push({
+        sql: 'profile.verified = :verified',
+        params: { verified: query.verified },
+      });
     }
-    if (query.totalFollowersMin !== undefined) {
-      filter['influencerProfile.totalFollowers'] =
-        filter['influencerProfile.totalFollowers'] || {};
-      filter['influencerProfile.totalFollowers']['$gte'] =
-        query.totalFollowersMin;
+
+    // Followers range
+    if (query.followersMin !== undefined) {
+      where.push({
+        sql: 'profile.totalFollowers >= :followersMin',
+        params: { followersMin: query.followersMin },
+      });
     }
-    if (query.totalFollowersMax !== undefined) {
-      filter['influencerProfile.totalFollowers'] =
-        filter['influencerProfile.totalFollowers'] || {};
-      filter['influencerProfile.totalFollowers']['$lte'] =
-        query.totalFollowersMax;
+
+    if (query.followersMax !== undefined) {
+      where.push({
+        sql: 'profile.totalFollowers <= :followersMax',
+        params: { followersMax: query.followersMax },
+      });
     }
-    if (query.averageEngagementMin !== undefined) {
-      filter['influencerProfile.averageEngagement'] =
-        filter['influencerProfile.averageEngagement'] || {};
-      filter['influencerProfile.averageEngagement']['$gte'] =
-        query.averageEngagementMin;
+
+    // Engagement rate range
+    if (query.engagementMin !== undefined) {
+      where.push({
+        sql: 'profile.averageEngagement >= :engagementMin',
+        params: { engagementMin: query.engagementMin },
+      });
     }
-    if (query.averageEngagementMax !== undefined) {
-      filter['influencerProfile.averageEngagement'] =
-        filter['influencerProfile.averageEngagement'] || {};
-      filter['influencerProfile.averageEngagement']['$lte'] =
-        query.averageEngagementMax;
+
+    if (query.engagementMax !== undefined) {
+      where.push({
+        sql: 'profile.averageEngagement <= :engagementMax',
+        params: { engagementMax: query.engagementMax },
+      });
     }
+
+    // Rating range
     if (query.ratingMin !== undefined) {
-      filter['influencerProfile.rating'] =
-        filter['influencerProfile.rating'] || {};
-      filter['influencerProfile.rating']['$gte'] = query.ratingMin;
+      where.push({
+        sql: 'profile.rating >= :ratingMin',
+        params: { ratingMin: query.ratingMin },
+      });
     }
+
     if (query.ratingMax !== undefined) {
-      filter['influencerProfile.rating'] =
-        filter['influencerProfile.rating'] || {};
-      filter['influencerProfile.rating']['$lte'] = query.ratingMax;
+      where.push({
+        sql: 'profile.rating <= :ratingMax',
+        params: { ratingMax: query.ratingMax },
+      });
     }
-    return filter;
+
+    return where;
   }
 
-  async getAllInfluencers(dto: GetUserPublicrofileDto) {
+  applySorting(qb: SelectQueryBuilder<any>, sort?: string) {
+    console.log('Applying sorting:', sort);
+    switch (sort) {
+      case 'newest':
+        qb.orderBy('profile.createdAt', 'DESC');
+        break;
+
+      case 'oldest':
+        qb.orderBy('profile.createdAt', 'ASC');
+        break;
+
+      case 'followers_desc':
+        qb.orderBy('profile.totalFollowers', 'DESC');
+        break;
+
+      case 'followers_asc':
+        qb.orderBy('profile.totalFollowers', 'ASC');
+        break;
+
+      case 'engagement_desc':
+        qb.orderBy('profile.averageEngagement', 'DESC');
+        break;
+
+      case 'engagement_asc':
+        qb.orderBy('profile.averageEngagement', 'ASC');
+        break;
+
+      case 'rating_desc':
+        qb.orderBy('profile.rating', 'DESC');
+        break;
+
+      case 'rating_asc':
+        qb.orderBy('profile.rating', 'ASC');
+        break;
+
+      case 'alphabetical':
+        qb.orderBy('user.firstName', 'ASC');
+        break;
+
+      case 'random':
+        qb.orderBy('RANDOM()');
+        break;
+
+      default:
+        qb.orderBy('profile.createdAt', 'DESC');
+    }
+  }
+
+  async getAllInfluencers(
+    dto: GetUserPublicrofileDto,
+    options: ProfileRequestOptions,
+  ) {
     try {
-      const query = {};
-      const filter = this.buildProfileSearchFilter('');
+      const { query, pagination } = options;
+      const { page, limit } = pagination;
+      const filter = this.buildProfileSearchFilter(query);
       const influencers = this.userRepo
         .createQueryBuilder('user')
-        .leftJoinAndSelect('user.influencerProfile', 'influencerProfile')
-        .where('influencerProfile.userId IS NOT NULL')
-        .limit(parseInt(dto.limit));
+        .leftJoinAndSelect('user.influencerProfile', 'profile')
+        .where('profile.userId IS NOT NULL')
+        .take(limit)
+        .skip((page - 1) * limit);
 
-      Object.entries(filter).forEach(([key, value]) => {
-        influencers.andWhere(`${key} = :${key.replace('.', '_')}`, {
-          [key.replace('.', '_')]: value,
-        });
-      });
+      if (query) {
+        filter.forEach((filter) =>
+          influencers.andWhere(filter.sql, filter.params),
+        );
+        if (query.sort) {
+          this.applySorting(influencers, query.sort);
+        } else {
+          // Default sorting only if no sort specified
+          // influencers.orderBy('user.createdAt', 'DESC');
+        }
+      } else {
+        // Default sorting when no query
+        // influencers.orderBy('user.createdAt', 'DESC');
+      }
 
       const [rec, counts] = await influencers.getManyAndCount();
 

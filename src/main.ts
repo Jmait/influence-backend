@@ -2,6 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import session from 'express-session';
+import { MainSeeder } from './seed/seeds';
+import { DataSource } from 'typeorm';
+import { PaginationInterceptor } from './shared/interceptors/pagination.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,6 +17,11 @@ async function bootstrap() {
       cookie: { secure: false }, // Set to true if using HTTPS
     }),
   );
+  app.useGlobalInterceptors(new PaginationInterceptor());
+  const dataSource = app.get(DataSource);
+
+  const seeder = new MainSeeder(dataSource);
+  await seeder.run();
 
   // Swagger setup
   const config = new DocumentBuilder()

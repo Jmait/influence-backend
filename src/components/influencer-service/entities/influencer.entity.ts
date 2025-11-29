@@ -5,11 +5,14 @@ export class InfluencerService {
   @PrimaryGeneratedColumn('uuid')
   serviceId: string;
 
-  @Column()
-  title: string;
+  @Column({ type: 'uuid' })
+  serviceCategoryId: string;
 
-  @Column()
-  channel: string;
+  @Column({ type: 'uuid' })
+  influencerId: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  title: string;
 
   @Column()
   price: number;
@@ -17,6 +20,6 @@ export class InfluencerService {
   @Column({ default: true })
   isActive: boolean;
 
-  @Column()
+  @Column({ type: 'text' })
   description: string;
 }

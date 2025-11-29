@@ -5,6 +5,10 @@ export interface ProfileRequestOptions {
   user: any;
   influencerProfileId?: string;
   query: any;
+  pagination: {
+    page: number;
+    limit: number;
+  };
   influencerProfile: InfluencerProfile;
   customerProfile: any;
 }
