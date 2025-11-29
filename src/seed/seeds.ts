@@ -34,18 +34,18 @@ export class MainSeeder {
           categoryName: category.categoryName,
         });
       }
+    }
 
-      for (const sub of INFLUENCER_SUBCATEGORIES) {
-        const subExists = await subcategoryRepo.findOne({
-          where: { subCategoryId: sub.subCategoryId },
+    for (const sub of INFLUENCER_SUBCATEGORIES) {
+      const subExists = await subcategoryRepo.findOne({
+        where: { subCategoryId: sub.subCategoryId },
+      });
+      if (!subExists) {
+        await subcategoryRepo.save({
+          subCategoryId: sub.subCategoryId,
+          subCategoryName: sub.subCategoryName,
+          categoryId: sub.categoryId,
         });
-        if (!subExists) {
-          await subcategoryRepo.save({
-            subCategoryId: sub.subCategoryId,
-            subCategoryName: sub.subCategoryName,
-            categoryId: sub.categoryId,
-          });
-        }
       }
     }
   }
