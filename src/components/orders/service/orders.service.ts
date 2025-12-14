@@ -2,7 +2,11 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Order } from '../entities/order.entity';
-import { CreateOrderDto, OrderListFilterDto } from '../dto/order.dto';
+import {
+  CreateOrderDto,
+  OrderListFilterDto,
+  UpdateOrderStatusDto,
+} from '../dto/order.dto';
 import { Product } from 'src/components/products/entities/product.entity';
 import { OrderItem } from '../entities/order-items.entity';
 import { PaymentService } from 'src/components/payment/service/payment.service';
@@ -221,6 +225,23 @@ export class OrdersService {
         throw new BadRequestException(ORDER_NOT_FOUND);
       }
       return order;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async updateOrderStatus(body: UpdateOrderStatusDto, orderId: string) {
+    try {
+      const order = await this.orderRepo.findOne({
+        where: { orderId },
+      });
+      if (!order) {
+        throw new BadRequestException(ORDER_NOT_FOUND);
+      }
+      await this.orderRepo.update(orderId, body);
+      return await this.orderRepo.findOne({
+        where: { orderId },
+      });
     } catch (error) {
       throw new BadRequestException(error.message);
     }

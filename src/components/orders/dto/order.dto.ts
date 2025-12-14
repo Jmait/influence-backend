@@ -13,6 +13,7 @@ import {
 } from 'class-validator';
 
 import { OrderItemType } from 'src/shared/enums/enum';
+import { OrderStatus } from '../entities/order-items.entity';
 
 export class CreateOrderDto {
   @IsUUID()
@@ -30,7 +31,7 @@ export class CreateOrderDto {
 export class OrderListFilterDto {
   @IsOptional()
   @ApiPropertyOptional()
-  status?: string[];
+  status?: string;
 
   @IsOptional()
   @ApiPropertyOptional()
@@ -52,4 +53,9 @@ export class OrderItemDto {
 
   @IsPositive()
   quantity: number;
+}
+
+export class UpdateOrderStatusDto {
+  @IsEnum(OrderStatus)
+  status: OrderStatus;
 }

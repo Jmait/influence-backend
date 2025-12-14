@@ -7,10 +7,15 @@ import {
   Req,
   Query,
   Param,
+  Patch,
 } from '@nestjs/common';
 import { OrdersService } from '../service/orders.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { CreateOrderDto, OrderListFilterDto } from '../dto/order.dto';
+import {
+  CreateOrderDto,
+  OrderListFilterDto,
+  UpdateOrderStatusDto,
+} from '../dto/order.dto';
 import { JwtGuard } from 'src/components/auth/guards/jwt.guard';
 import type { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
 import { SuccessResponse } from 'src/shared/utils/api-response';
@@ -55,5 +60,15 @@ export class OrdersController {
   async getOrderDetails(@Param('orderId') orderId: string) {
     const order = await this.ordersService.getOrderDetails(orderId);
     return SuccessResponse(order, 'Order details fetched successfully');
+  }
+
+  @Patch(':orderId/status')
+  @UseGuards(JwtGuard)
+  async updateOrderStatus(
+    @Body() body: UpdateOrderStatusDto,
+    @Param('orderId') orderId: string,
+  ) {
+    const order = await this.ordersService.updateOrderStatus(body, orderId);
+    return SuccessResponse(order, 'Order status updated successfully');
   }
 }
