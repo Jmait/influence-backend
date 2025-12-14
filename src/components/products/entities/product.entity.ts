@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { InfluencerProfile } from 'src/components/influencers/entities/influencer.entity';
 import { ProductVariants } from './product-variants.entity';
+import { InfluencerCategory } from 'src/components/influencer-category/entities/influencer-category.entity';
 
 @Entity('products')
 export class Product {
@@ -64,6 +65,15 @@ export class Product {
     nullable: true,
   })
   variants: ProductVariants[];
+
+  @ManyToOne(() => InfluencerCategory, (category) => category.products, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'categoryId' })
+  category: InfluencerCategory;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt: Date;
 
   @Column({ nullable: true })
   description: string;

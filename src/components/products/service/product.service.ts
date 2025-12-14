@@ -24,19 +24,49 @@ export class ProductsService {
     }
     return filters;
   }
-  async findAll(
+  async getAllProducts(
     options: ProfileRequestOptions,
   ): Promise<{ records: Product[]; counts: number }> {
     const { query, pagination } = options;
-    const { limit, offset: page } = pagination;
+    const { limit, offset } = pagination;
     const filters = this.buildProfileSearchFilter(options.query);
     const products = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.shop', 'shop')
       .leftJoinAndSelect('product.influencer', 'influencer')
       .leftJoinAndSelect('product.variants', 'variants')
-      .take(pagination.limit)
-      .skip((page - 1) * limit);
+      .where('product.deletedAt IS NULL')
+      .take(limit)
+      .skip(offset);
+
+    if (query) {
+      filters.forEach((filter) => products.andWhere(filter.sql, filter.params));
+      if (query.sort) {
+        this.applySorting(products, query.sort);
+      }
+    }
+    const [records, counts] = await products.getManyAndCount();
+
+    return { records, counts };
+  }
+
+  async getInfluencerProducts(
+    options: ProfileRequestOptions,
+    influencerId: string,
+  ): Promise<{ records: Product[]; counts: number }> {
+    const { query, pagination } = options;
+    const { limit, offset } = pagination;
+    const filters = this.buildProfileSearchFilter(options.query);
+    const products = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.shop', 'shop')
+      .leftJoinAndSelect('product.influencer', 'influencer')
+      .leftJoinAndSelect('product.variants', 'variants')
+      .leftJoinAndSelect('product.category', 'category')
+      .where('product.influecerId = :influencerId', { influencerId })
+      .andWhere('product.deletedAt IS NULL')
+      .take(limit)
+      .skip(offset);
 
     if (query) {
       filters.forEach((filter) => products.andWhere(filter.sql, filter.params));
@@ -136,7 +166,7 @@ export class ProductsService {
     if (!product) {
       throw new BadRequestException(PRODUCT_NOT_FOUND);
     }
-    await this.productRepository.delete({ productId });
+    await this.productRepository.update(productId, { deletedAt: new Date() });
     return product;
   }
 

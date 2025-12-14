@@ -16,6 +16,8 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CreateProductDto, UpdateProductDto } from '../dto/product.dto';
 import type { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
 import { JwtGuard } from 'src/components/auth/guards/jwt.guard';
+import { SuccessResponse } from 'src/shared/utils/api-response';
+import { SUCCESS_MESSAGES } from 'src/shared/utils/success.utils';
 
 @ApiTags('Product Management')
 @Controller('products')
@@ -23,10 +25,9 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  async findAll(
-    @Req() req: ProfileRequestOptions,
-  ): Promise<{ records: Product[]; counts: number }> {
-    return this.productsService.findAll(req);
+  async findAll(@Req() req: ProfileRequestOptions) {
+    const result = await this.productsService.getAllProducts(req);
+    return SuccessResponse(result, 'Products fetched successfully');
   }
 
   @Get(':productId')
@@ -44,8 +45,9 @@ export class ProductsController {
   async create(
     @Body() product: CreateProductDto,
     @Req() req: ProfileRequestOptions,
-  ): Promise<Product | null> {
-    return this.productsService.create(product, req);
+  ) {
+    const result = await this.productsService.create(product, req);
+    return SuccessResponse(result, SUCCESS_MESSAGES.PRODUCT_CREATED);
   }
 
   @Patch(':productId')
@@ -56,7 +58,20 @@ export class ProductsController {
     @Param('productId') productId: string,
   ) {
     const result = await this.productsService.update(productId, product);
-    return { result, message: 'Product updated successfully' };
+    return SuccessResponse(result, SUCCESS_MESSAGES.PRODUCT_UPDATED);
+  }
+
+  @Get('influencer/:influencerId')
+  @ApiBearerAuth('Bearer')
+  async getInfluencerProducts(
+    @Req() req: ProfileRequestOptions,
+    @Param('influencerId') influencerId: string,
+  ) {
+    const result = await this.productsService.getInfluencerProducts(
+      req,
+      influencerId,
+    );
+    return SuccessResponse(result, SUCCESS_MESSAGES.PRODUCT_UPDATED);
   }
 
   @Delete(':productId')
@@ -64,6 +79,6 @@ export class ProductsController {
   @UseGuards(JwtGuard)
   async deleteProduct(@Param('productId') productId: string) {
     const result = await this.productsService.deleteProduct(productId);
-    return { result, message: 'Product deleted successfully' };
+    return SuccessResponse(result, SUCCESS_MESSAGES.PRODUCT_DELETED);
   }
 }
