@@ -6,9 +6,9 @@ import {
   UseGuards,
   Req,
   Query,
+  Param,
 } from '@nestjs/common';
 import { OrdersService } from '../service/orders.service';
-import { Order } from '../entities/order.entity';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CreateOrderDto, OrderListFilterDto } from '../dto/order.dto';
 import { JwtGuard } from 'src/components/auth/guards/jwt.guard';
@@ -48,5 +48,12 @@ export class OrdersController {
   ): Promise<any> {
     const result = await this.ordersService.createNewOrder(body, req);
     return result;
+  }
+
+  @Get(':orderId')
+  @UseGuards(JwtGuard)
+  async getOrderDetails(@Param('orderId') orderId: string) {
+    const order = await this.ordersService.getOrderDetails(orderId);
+    return SuccessResponse(order, 'Order details fetched successfully');
   }
 }

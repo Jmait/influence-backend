@@ -10,6 +10,7 @@ import { Customer } from 'src/components/customers/entities/customer.entity';
 import { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
 import { User } from 'src/components/user/entities/user.entity';
 import {
+  ORDER_NOT_FOUND,
   OUT_OF_STOCK,
   productOrCampaignNotFound,
   USER_ACCOUNT_NOT_FOUND,
@@ -205,6 +206,21 @@ export class OrdersService {
       const [totalRecords, count] = await order.getManyAndCount();
 
       return { totalRecords, count };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async getOrderDetails(orderId: string): Promise<Order> {
+    try {
+      const order = await this.orderRepo.findOne({
+        where: { orderId },
+        relations: ['items', 'customer', 'shippingAddress'],
+      });
+      if (!order) {
+        throw new BadRequestException(ORDER_NOT_FOUND);
+      }
+      return order;
     } catch (error) {
       throw new BadRequestException(error.message);
     }
