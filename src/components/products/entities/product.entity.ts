@@ -1,4 +1,3 @@
-import { User } from 'src/components/user/entities/user.entity';
 import { Shop } from '../../../components/shop/entity/shop.entity';
 import {
   Entity,
