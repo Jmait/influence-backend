@@ -56,3 +56,8 @@ export const SHIPPING_ADDRESS_NOT_FOUND = {
   message: ' Shipping address not found ',
   code: 'INF-011',
 };
+
+export const SHOP_NOT_FOUND = {
+  message: 'Shop not found',
+  code: 'INF-012',
+};

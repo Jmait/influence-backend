@@ -21,8 +21,17 @@ export class Shop {
   @Column({ type: 'varchar' })
   name: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  location: string;
+
   @Column({ type: 'uuid' })
   influencerId: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt: Date;
+
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
 
   @Column({ nullable: true })
   logo: string;

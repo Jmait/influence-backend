@@ -1,9 +1,10 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { CreateShopDto } from '../dto/shop.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { CreateShopDto, UpdateShopDto } from '../dto/shop.dto';
 import { Repository } from 'typeorm';
 import { Shop } from '../entity/shop.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
+import { SHOP_NOT_FOUND } from 'src/shared/utils/error.utils';
 
 @Injectable()
 export class ShopService {
@@ -11,20 +12,39 @@ export class ShopService {
     @InjectRepository(Shop)
     private readonly shopRepository: Repository<Shop>, // Replace 'any' with actual repository type
   ) {}
-  // Example method to get all shops
-  async getAllShops(): Promise<Shop[]> {
+
+  async getAllShops(options: ProfileRequestOptions) {
     try {
-      const shops = await this.shopRepository.find();
-      return shops;
+      let shops = await this.shopRepository
+        .createQueryBuilder('shop')
+        .leftJoin('shop.products', 'product')
+        .leftJoinAndSelect('shop.influencer', 'influencer')
+        .loadRelationCountAndMap('shop.productCount', 'shop.products')
+        .where('shop.deletedAt IS NULL');
+      if (options.query.q) {
+        shops = shops.andWhere('shop.name ILIKE :name', {
+          name: `%${options.query.q}%`,
+        });
+      }
+      const [totalRecords, count] = await shops.getManyAndCount();
+      return { totalRecords, count };
     } catch (error) {
       throw new BadRequestException(error.message);
     }
   }
 
-  // Example method to get a shop by ID
-  async getShopById(id: string): Promise<any | null> {
-    // TODO: Implement actual logic to fetch a shop by ID
-    return null;
+  async getShopDetails(id: string) {
+    try {
+      const shop = await this.shopRepository.findOne({
+        where: { shopId: id },
+      });
+      if (!shop) {
+        throw new BadRequestException(SHOP_NOT_FOUND);
+      }
+      return shop;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 
   async createShop(
@@ -45,32 +65,59 @@ export class ShopService {
     }
   }
 
-  async getInfluencerShops(influencerId: string): Promise<Shop[]> {
+  async getInfluencerShops(
+    influencerId: string,
+    options: ProfileRequestOptions,
+  ) {
     try {
-      const shops = await this.shopRepository
+      let shops = await this.shopRepository
         .createQueryBuilder('shop')
         .leftJoin('shop.products', 'product')
         .leftJoinAndSelect('shop.influencer', 'influencer')
         .loadRelationCountAndMap('shop.productCount', 'shop.products')
         .where('shop.influencerId = :influencerId', { influencerId })
-        .getMany();
-
-      console.log('Found shops for influencer:', shops);
-      return shops;
+        .andWhere('shop.deletedAt IS NULL');
+      if (options.query.q) {
+        shops = shops.andWhere('shop.name ILIKE :name', {
+          name: `%${options.query.q}%`,
+        });
+      }
+      const [totalRecords, count] = await shops.getManyAndCount();
+      return { totalRecords, count };
     } catch (error) {
       throw new BadRequestException(error.message);
     }
   }
 
-  // Example method to update a shop
-  async updateShop(id: string, shopData: any): Promise<any | null> {
-    // TODO: Implement actual logic to update a shop
-    return null;
+  async updateShop(shopId: string, shopData: UpdateShopDto) {
+    try {
+      const shop = await this.shopRepository.findOne({
+        where: { shopId },
+      });
+      if (!shop) {
+        throw new BadRequestException(SHOP_NOT_FOUND);
+      }
+      await this.shopRepository.update(shopId, shopData);
+      return await this.shopRepository.findOne({
+        where: { shopId },
+      });
+    } catch (error) {
+      throw new BadRequestException(error.mnessage);
+    }
   }
 
-  // Example method to delete a shop
-  async deleteShop(id: string): Promise<boolean> {
-    // TODO: Implement actual logic to delete a shop
-    return false;
+  async deleteShop(shopId: string) {
+    try {
+      const shop = await this.shopRepository.findOne({
+        where: { shopId },
+      });
+      if (!shop) {
+        throw new BadRequestException('Shop not found');
+      }
+      await this.shopRepository.update(shopId, { deletedAt: new Date() });
+      return { message: 'Shop deleted successfully' };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 }
