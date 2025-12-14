@@ -12,9 +12,4 @@ export class CustomersController {
   async findAll(): Promise<Customer[]> {
     return this.customersService.findAll();
   }
-
-  @Post()
-  async create(@Body() customer: Customer): Promise<Customer> {
-    return this.customersService.create(customer);
-  }
 }

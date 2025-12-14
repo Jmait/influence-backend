@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('influencer_services')
-export class InfluencerService {
+export class Campaigns {
   @PrimaryGeneratedColumn('uuid')
   serviceId: string;
 

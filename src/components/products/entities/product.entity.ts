@@ -6,8 +6,10 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { InfluencerProfile } from 'src/components/influencers/entities/influencer.entity';
+import { ProductVariants } from './product-variants.entity';
 
 @Entity('products')
 export class Product {
@@ -19,6 +21,9 @@ export class Product {
 
   @Column({ nullable: true })
   image: string;
+
+  @Column({ nullable: true })
+  sku: string;
 
   @Column({ type: 'decimal' })
   price: number;
@@ -32,6 +37,18 @@ export class Product {
   @Column({ type: 'uuid' })
   shopId: string;
 
+  @Column({ type: 'uuid', nullable: true })
+  categoryId: string;
+
+  @Column({ type: 'decimal', default: 0 })
+  quantity: number;
+
+  @Column({ type: 'decimal', default: 0 })
+  deliveryFee: number;
+
+  @Column({ type: 'text', nullable: true })
+  productTerms: string;
+
   @Column({ type: 'uuid' })
   influencerId: string;
 
@@ -42,6 +59,11 @@ export class Product {
   @ManyToOne(() => InfluencerProfile, (influencer) => influencer.products)
   @JoinColumn({ name: 'influencerId' })
   influencer: InfluencerProfile;
+
+  @OneToMany(() => ProductVariants, (variants) => variants.product, {
+    nullable: true,
+  })
+  variants: ProductVariants[];
 
   @Column({ nullable: true })
   description: string;

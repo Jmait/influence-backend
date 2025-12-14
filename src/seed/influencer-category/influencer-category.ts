@@ -1,6 +1,6 @@
 export const INFLUENCER_CATEGORIES = [
   {
-    categoryId: '7b4c2f2c-9dc5-4f26-b3d6-1d9cf672a101',
+    categoryId: '7b4c2f2c-9dc5-4f26-b3d6-1d9cf672a101', 
     categoryName: 'Beauté et soins',
   },
   { categoryId: '53d43b60-5f4a-4cd1-9c82-8e6062ad4012', categoryName: 'Mode' },
