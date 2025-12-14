@@ -20,8 +20,8 @@ async function bootstrap() {
   app.useGlobalInterceptors(new PaginationInterceptor());
   const dataSource = app.get(DataSource);
 
-  const seeder = new MainSeeder(dataSource);
-  await seeder.run();
+  // const seeder = new MainSeeder(dataSource);
+  // await seeder.run();
 
   // Swagger setup
   const config = new DocumentBuilder()
