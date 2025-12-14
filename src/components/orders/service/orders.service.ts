@@ -19,7 +19,7 @@ import {
   productOrCampaignNotFound,
   USER_ACCOUNT_NOT_FOUND,
 } from 'src/shared/utils/error.utils';
-import { Campaigns } from 'src/components/influencer-service/entities/influencer.entity';
+import { Campaigns } from 'src/components/campaign/entities/campaign.entity';
 import { InfluencerProfile } from 'src/components/influencers/entities/influencer.entity';
 
 @Injectable()

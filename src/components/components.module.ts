@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { InfluencerModule } from './influencers/influencer.module';
-import { InfluencerServiceModule } from './influencer-service/influencer-service.module';
+import { CampaignModule } from './campaign/campaign.module';
 import { ShopModule } from './shop/shop.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ProductsModule } from './products/products.module';
@@ -16,7 +16,7 @@ import { ShippingAddressModule } from './shipping/shipping.module';
     AuthModule,
     UserModule,
     InfluencerModule,
-    InfluencerServiceModule,
+    CampaignModule,
     ShopModule,
     ReviewsModule,
     ProductsModule,

@@ -8,7 +8,7 @@ import { Product } from '../products/entities/product.entity';
 import { PaymentModule } from '../payment/payment.module';
 import { Customer } from '../customers/entities/customer.entity';
 import { User } from '../user/entities/user.entity';
-import { Campaigns } from '../influencer-service/entities/influencer.entity';
+import { Campaigns } from '../campaign/entities/campaign.entity';
 import { InfluencerProfile } from '../influencers/entities/influencer.entity';
 
 @Module({

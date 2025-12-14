@@ -14,6 +14,15 @@ export class Campaigns {
   @Column({ type: 'varchar', length: 255 })
   title: string;
 
+  @Column({ type: 'int', default: 1 })
+  duration: number;
+
+  @Column({ type: 'int', default: 1 })
+  numberOfDeliverables: number;
+
+  @Column({ type: 'int', default: 0 })
+  numberOfRevisions: number;
+
   @Column()
   price: number;
 

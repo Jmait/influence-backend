@@ -7,7 +7,7 @@ import {
 } from './influencer-category/influencer-category';
 import { InfluencerSubCategory } from 'src/components/influencer-category/entities/influencer-sub.entity';
 import { InfluencerCategoryService } from 'src/components/influencer-category/service/influencer-category.service';
-import { InfluncerServiceCategory } from 'src/components/influencer-service/entities/service_category.entity';
+import { CampaignCategory } from 'src/components/campaign/entities/campaign_category.entity';
 
 export class MainSeeder {
   constructor(private dataSource: DataSource) {}
@@ -51,9 +51,7 @@ export class MainSeeder {
   }
 
   private async serviceCategories() {
-    const categoryRepo = this.dataSource.getRepository(
-      InfluncerServiceCategory,
-    );
+    const categoryRepo = this.dataSource.getRepository(CampaignCategory);
 
     for (const category of INFLUENCER_SERVICE_CATEGORIES) {
       const exists = await categoryRepo.findOne({
