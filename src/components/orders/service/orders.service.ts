@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Order } from '../entities/order.entity';
-import { CreateOrderDto } from '../dto/order.dto';
+import { CreateOrderDto, OrderListFilterDto } from '../dto/order.dto';
 import { Product } from 'src/components/products/entities/product.entity';
 import { OrderItem } from '../entities/order-items.entity';
 import { PaymentService } from 'src/components/payment/service/payment.service';
@@ -14,8 +14,8 @@ import {
   productOrCampaignNotFound,
   USER_ACCOUNT_NOT_FOUND,
 } from 'src/shared/utils/error.utils';
-import { InfluencerService } from 'src/components/influencers/service/influencer.service';
 import { Campaigns } from 'src/components/influencer-service/entities/influencer.entity';
+import { InfluencerProfile } from 'src/components/influencers/entities/influencer.entity';
 
 @Injectable()
 export class OrdersService {
@@ -23,6 +23,9 @@ export class OrdersService {
   constructor(
     @InjectRepository(Order)
     private readonly orderRepo: Repository<Order>,
+
+    @InjectRepository(InfluencerProfile)
+    private readonly influencerProfileRepo: Repository<InfluencerProfile>,
 
     @InjectRepository(OrderItem)
     private readonly orderItem: Repository<OrderItem>,
@@ -41,10 +44,6 @@ export class OrdersService {
 
     private readonly paymentService: PaymentService,
   ) {}
-
-  async findAll(): Promise<Order[]> {
-    return this.orderRepo.find();
-  }
 
   async createNewOrder(dto: CreateOrderDto, options: ProfileRequestOptions) {
     try {
@@ -95,6 +94,8 @@ export class OrdersService {
               const orderItem = this.orderItem.create({
                 orderId: savedOrder.orderId,
                 productId: element.productId,
+                name: element.name,
+                type: element.type,
                 price: element.price,
                 quantity: element.quantity,
               });
@@ -140,5 +141,72 @@ export class OrdersService {
 
   async create(order: Order): Promise<Order> {
     return this.orderRepo.save(order);
+  }
+
+  async salesOverview(influencerId: string) {
+    try {
+      const totalSales = await this.orderRepo
+        .createQueryBuilder('order')
+        .select('SUM(order.totalPrice)', 'total')
+        .where('order.paymentStatus = :status', { status: 'SUCCESS' })
+        .andWhere('order.influencerId = :influencerId', { influencerId })
+        .getRawOne();
+      const averegaeRatings = await this.influencerProfileRepo
+        .createQueryBuilder('profile')
+        .where('profile.influencerProfileId = :influencerId', { influencerId })
+        .select('AVG(profile.rating)', 'average')
+        .getRawOne();
+      console.log(influencerId);
+      const currentMonthSales = await this.orderRepo
+        .createQueryBuilder('order')
+        .where('order.influencerId = :influencerId', { influencerId })
+        .select('SUM(order.totalPrice)', 'total')
+        .andWhere(
+          'EXTRACT(MONTH FROM order.createdAt) = EXTRACT(MONTH FROM CURRENT_DATE)',
+        )
+        .andWhere(
+          'EXTRACT(YEAR FROM order.createdAt) = EXTRACT(YEAR FROM CURRENT_DATE)',
+        )
+        .andWhere('order.paymentStatus = :status', { status: 'SUCCESS' })
+        .getRawOne();
+      return {
+        totalSales: parseFloat(totalSales.total) || 0,
+        averageRatings: parseFloat(averegaeRatings.average) || 0,
+        currentMonthSales: parseFloat(currentMonthSales.total) || 0,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async getOrders(options: ProfileRequestOptions, query: OrderListFilterDto) {
+    try {
+      const influencerId = options.user.influencerProfileId;
+      const { pagination } = options;
+      console.log('Pagination Options:', pagination);
+      let order = this.orderRepo
+        .createQueryBuilder('order')
+        .leftJoinAndSelect('order.items', 'items')
+        .where('order.influencerId = :influencerId', { influencerId })
+        .take(pagination.limit)
+        .skip(pagination.offset)
+        .leftJoinAndSelect('order.customer', 'customer');
+
+      if (query.type) {
+        order = order.andWhere('items.type = :type', { type: query.type });
+      }
+
+      if (options.query.q) {
+        order = order.andWhere('order.reference ILIKE :reference', {
+          reference: `%${options.query.q}%`,
+        });
+      }
+
+      const [totalRecords, count] = await order.getManyAndCount();
+
+      return { totalRecords, count };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 }

@@ -48,7 +48,7 @@ export class ReviewService {
     influencerId: string,
   ): Promise<{ records: Review[]; counts: number }> {
     const { query, pagination } = options;
-    const { page, limit } = pagination;
+    const { offset: page, limit } = pagination;
     const reviews = this.reviewRepository
       .createQueryBuilder('review')
       .where('review.influencerId = :influencerId', { influencerId })
@@ -67,7 +67,7 @@ export class ReviewService {
     productId: string,
   ): Promise<{ records: ProductReview[]; counts: number }> {
     const { query, pagination } = options;
-    const { page, limit } = pagination;
+    const { offset: page, limit } = pagination;
     const reviews = this.productReviewRepository
       .createQueryBuilder('review')
       .where('review.productId = :productId', { productId })

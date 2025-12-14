@@ -50,7 +50,7 @@ export class InfluncerServiceAsproduct {
   ) {
     try {
       const { pagination, query } = options;
-      const { limit, page } = pagination;
+      const { limit, offset: page } = pagination;
       const services = this.serviceRepository
         .createQueryBuilder('service')
         .where('service.influencerId = :influencerId', { influencerId })

@@ -1,4 +1,6 @@
+import { Exclude } from 'class-transformer';
 import { InfluencerProfile } from 'src/components/influencers/entities/influencer.entity';
+import { Order } from 'src/components/orders/entities/order.entity';
 import { Review } from 'src/components/reviews/entities/review.entity';
 import { Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Column } from 'typeorm';
@@ -21,6 +23,7 @@ export class User {
   email: string;
 
   @Column()
+  @Exclude()
   password: string;
 
   @OneToOne(
@@ -31,4 +34,7 @@ export class User {
 
   @OneToMany(() => Review, (review) => review.user)
   reviews: Review[];
+
+  @OneToMany(() => Order, (order) => order.customer)
+  orders: Order[];
 }

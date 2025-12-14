@@ -1,7 +1,9 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
+  IsEnum,
   IsJSON,
   IsOptional,
   IsPositive,
@@ -9,7 +11,8 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { DeliverAddressDto } from 'src/components/shipping/dto/shipping.dto';
+
+import { OrderItemType } from 'src/shared/enums/enum';
 
 export class CreateOrderDto {
   @IsUUID()
@@ -24,9 +27,25 @@ export class CreateOrderDto {
   shippingAddressId: string;
 }
 
+export class OrderListFilterDto {
+  @IsOptional()
+  @ApiPropertyOptional()
+  status?: string[];
+
+  @IsOptional()
+  @ApiPropertyOptional()
+  type: string;
+}
+
 export class OrderItemDto {
   @IsUUID()
   productId: string;
+
+  @IsEnum(OrderItemType)
+  type: OrderItemType;
+
+  @IsString()
+  name: string;
 
   @IsPositive()
   price: number;

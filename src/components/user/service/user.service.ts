@@ -281,7 +281,7 @@ export class UserService {
   ) {
     try {
       const { query, pagination } = options;
-      const { page, limit } = pagination;
+      const { offset: page, limit } = pagination;
       const filter = this.buildProfileSearchFilter(query);
       const influencers = this.userRepo
         .createQueryBuilder('user')

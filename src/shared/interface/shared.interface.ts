@@ -6,7 +6,7 @@ export interface ProfileRequestOptions {
   influencerProfileId?: string;
   query: any;
   pagination: {
-    page: number;
+    offset: number;
     limit: number;
   };
   influencerProfile: InfluencerProfile;

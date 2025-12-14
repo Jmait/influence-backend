@@ -28,7 +28,7 @@ export class ProductsService {
     options: ProfileRequestOptions,
   ): Promise<{ records: Product[]; counts: number }> {
     const { query, pagination } = options;
-    const { limit, page } = pagination;
+    const { limit, offset: page } = pagination;
     const filters = this.buildProfileSearchFilter(options.query);
     const products = this.productRepository
       .createQueryBuilder('product')

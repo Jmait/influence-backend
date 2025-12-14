@@ -9,6 +9,7 @@ import { PaymentModule } from '../payment/payment.module';
 import { Customer } from '../customers/entities/customer.entity';
 import { User } from '../user/entities/user.entity';
 import { Campaigns } from '../influencer-service/entities/influencer.entity';
+import { InfluencerProfile } from '../influencers/entities/influencer.entity';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { Campaigns } from '../influencer-service/entities/influencer.entity';
       Customer,
       User,
       Campaigns,
+      InfluencerProfile,
     ]),
     PaymentModule,
   ],

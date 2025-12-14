@@ -6,6 +6,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Order } from './order.entity';
+import { OrderItemType } from '../../../shared/enums/enum';
 
 export enum TransactionStatus {
   SUCCESS = 'SUCCESS',
@@ -30,6 +31,12 @@ export class OrderItem {
 
   @Column({ type: 'uuid' })
   productId: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  name: string;
+
+  @Column({ type: 'enum', enum: OrderItemType, nullable: true })
+  type: OrderItemType;
 
   @Column('decimal')
   price: number;

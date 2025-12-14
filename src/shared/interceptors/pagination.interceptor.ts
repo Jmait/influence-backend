@@ -52,7 +52,7 @@ export class PaginationInterceptor implements NestInterceptor {
     } else {
       pagination = {
         limit: limit,
-        page: page,
+        offset: page > 0 ? (page - 1) * limit : 0,
       };
     }
 
