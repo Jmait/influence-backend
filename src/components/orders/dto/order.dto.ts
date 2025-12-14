@@ -1,12 +1,15 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
+  IsJSON,
   IsOptional,
   IsPositive,
   IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
+import { DeliverAddressDto } from 'src/components/shipping/dto/shipping.dto';
 
 export class CreateOrderDto {
   @IsUUID()
@@ -16,6 +19,9 @@ export class CreateOrderDto {
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items: OrderItemDto[];
+
+  @IsString()
+  shippingAddressId: string;
 }
 
 export class OrderItemDto {
@@ -27,22 +33,4 @@ export class OrderItemDto {
 
   @IsPositive()
   quantity: number;
-}
-
-export class DeliverAddressDto {
-  @IsString()
-  firstName: string;
-
-  @IsString()
-  lastName: string;
-
-  @IsString()
-  addressLine1: string;
-
-  @IsString()
-  @IsOptional()
-  additionalAddress: string;
-
-  @IsString()
-  city: string;
 }

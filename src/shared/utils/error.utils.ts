@@ -46,3 +46,13 @@ export function OUT_OF_STOCK(name: string) {
     code: 'INF-009',
   };
 }
+
+export const SHIPPING_ADDRESS_EXIST = {
+  message: ' Shipping address already exists ',
+  code: 'INF-010',
+};
+
+export const SHIPPING_ADDRESS_NOT_FOUND = {
+  message: ' Shipping address not found ',
+  code: 'INF-011',
+};

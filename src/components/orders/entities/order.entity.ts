@@ -1,9 +1,17 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  OneToOne,
+  ManyToOne,
+} from 'typeorm';
 import {
   OrderItem,
   OrderStatus,
   TransactionStatus,
 } from './order-items.entity';
+import { ShippingAddress } from 'src/components/shipping/entities/shipping.entity';
 
 @Entity('orders')
 export class Order {
@@ -24,6 +32,16 @@ export class Order {
 
   @Column('decimal')
   totalPrice: number;
+
+  @Column({ type: 'uuid', nullable: true })
+  shippingAddressId: string;
+
+  @ManyToOne(
+    () => ShippingAddress,
+    (shippingAddress) => shippingAddress.orders,
+    {},
+  )
+  shippingAddress: ShippingAddress;
 
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
   items: OrderItem[];
