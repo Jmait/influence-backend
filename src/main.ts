@@ -2,13 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import session from 'express-session';
-import { MainSeeder } from './seed/seeds';
+import cors from 'cors';
 import { DataSource } from 'typeorm';
 import { PaginationInterceptor } from './shared/interceptors/pagination.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
+  app.use(cors());
   app.use(
     session({
       secret: process.env.SESSION_SECRET || 'your-session-secret',
