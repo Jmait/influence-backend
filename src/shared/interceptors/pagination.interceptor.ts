@@ -50,9 +50,10 @@ export class PaginationInterceptor implements NestInterceptor {
       };
       console.log('Cursor-based pagination applied:', pagination);
     } else {
+      const safePage = Math.max(1, page ?? 1);
       pagination = {
         limit: limit,
-        offset: page > 0 ? (page - 1) * limit : 0,
+        offset: (safePage - 1) * limit,
       };
     }
 
