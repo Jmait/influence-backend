@@ -281,14 +281,14 @@ export class UserService {
   ) {
     try {
       const { query, pagination } = options;
-      const { offset: page, limit } = pagination;
+      const { offset, limit } = pagination;
       const filter = this.buildProfileSearchFilter(query);
       const influencers = this.userRepo
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.influencerProfile', 'profile')
         .where('profile.userId IS NOT NULL')
         .take(limit)
-        .skip((page - 1) * limit);
+        .skip(offset);
 
       if (query) {
         filter.forEach((filter) =>
