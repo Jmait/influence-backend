@@ -19,8 +19,10 @@ import {
 import { JwtGuard } from 'src/components/auth/guards/jwt.guard';
 import { CampaignService } from '../service/campaign-service.service';
 import { SuccessResponse } from 'src/shared/utils/api-response';
+import { Public } from 'src/shared/decorator/decorators';
 
 @ApiTags('Campaign  Management')
+@ApiBearerAuth('Bearer')
 @Controller('campaign')
 export class InfluencerCampaignController {
   constructor(private readonly campaignService: CampaignService) {}
@@ -78,6 +80,7 @@ export class InfluencerCampaignController {
     return SuccessResponse(result, 'Campaign updated successfully');
   }
 
+  @Public()
   @Get('categories')
   async getServiceCategories() {
     const result = await this.campaignService.getServiceCategories();
