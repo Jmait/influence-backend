@@ -6,6 +6,7 @@ import cors from 'cors';
 import { DataSource } from 'typeorm';
 import { PaginationInterceptor } from './shared/interceptors/pagination.interceptor';
 import { MainSeeder } from './seed/seeds';
+import { ProfileSetupCheckerInterceptor } from './shared/interceptor/profile-checker';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -19,6 +20,7 @@ async function bootstrap() {
     }),
   );
   app.useGlobalInterceptors(new PaginationInterceptor());
+  app.useGlobalInterceptors(new ProfileSetupCheckerInterceptor());
   const dataSource = app.get(DataSource);
 
   const seeder = new MainSeeder(dataSource);
