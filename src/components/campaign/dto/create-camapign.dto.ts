@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
 
 export class CreateServiceDto {
   @IsNotEmpty()
@@ -32,6 +32,7 @@ export class CreateServiceDto {
   numberOfRevisions: number;
 
   @IsNotEmpty()
+  @IsUUID()
   @IsString()
   categoryId: string;
 }
