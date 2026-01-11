@@ -71,7 +71,6 @@ export class InfluencerCampaignController {
 
   @Patch(':campaignId')
   @ApiBearerAuth('Bearer')
-  @UseGuards(JwtGuard)
   async updateCampaign(
     @Body() body: UpdateCampaignDto,
     @Param('campaignId') campaignId: string,
@@ -81,7 +80,7 @@ export class InfluencerCampaignController {
   }
 
   @Public()
-  @Get('categories')
+  @Get('categories/list')
   async getServiceCategories() {
     const result = await this.campaignService.getServiceCategories();
     return result;
