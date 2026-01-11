@@ -1,5 +1,10 @@
 import { BadRequestException, Injectable, Req } from '@nestjs/common';
+import {
+  UpdateOrCreateInfluencerProfileDto,
+  UserType,
+} from 'src/components/auth/dto/auth.dto';
 import { GetUserPublicrofileDto } from 'src/components/user/dto/user.dto';
+import { User } from 'src/components/user/entities/user.entity';
 import { UserService } from 'src/components/user/service/user.service';
 import type { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
 
@@ -26,5 +31,17 @@ export class InfluencerService {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+
+  async createOrUpdateInfluencerProfile(
+    body: UpdateOrCreateInfluencerProfileDto,
+    type: UserType,
+    user: User,
+  ) {
+    return await this.userService.createOrUpdateInfluencerProfile(
+      body,
+      type,
+      user,
+    );
   }
 }
