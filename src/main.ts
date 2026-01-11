@@ -5,6 +5,7 @@ import session from 'express-session';
 import cors from 'cors';
 import { DataSource } from 'typeorm';
 import { PaginationInterceptor } from './shared/interceptors/pagination.interceptor';
+import { MainSeeder } from './seed/seeds';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,8 +21,8 @@ async function bootstrap() {
   app.useGlobalInterceptors(new PaginationInterceptor());
   const dataSource = app.get(DataSource);
 
-  // const seeder = new MainSeeder(dataSource);
-  // await seeder.run();
+  const seeder = new MainSeeder(dataSource);
+  await seeder.run();
 
   // Swagger setup
   const config = new DocumentBuilder()
