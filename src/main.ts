@@ -7,6 +7,7 @@ import { DataSource } from 'typeorm';
 import { PaginationInterceptor } from './shared/interceptors/pagination.interceptor';
 import { MainSeeder } from './seed/seeds';
 import { ProfileSetupCheckerInterceptor } from './shared/interceptor/profile-checker';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,6 +18,13 @@ async function bootstrap() {
       resave: false,
       saveUninitialized: false,
       cookie: { secure: false }, // Set to true if using HTTPS
+    }),
+  );
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
     }),
   );
   app.useGlobalInterceptors(new PaginationInterceptor());
