@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, ModuleRef } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import session from 'express-session';
@@ -20,7 +20,9 @@ async function bootstrap() {
     }),
   );
   app.useGlobalInterceptors(new PaginationInterceptor());
-  app.useGlobalInterceptors(new ProfileSetupCheckerInterceptor());
+  app.useGlobalInterceptors(
+    new ProfileSetupCheckerInterceptor(app.get(ModuleRef)),
+  );
   const dataSource = app.get(DataSource);
 
   const seeder = new MainSeeder(dataSource);
