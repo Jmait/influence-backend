@@ -13,9 +13,12 @@ export class Customer {
   @Column({ type: 'uuid' })
   customerId: string;
 
-  @Column()
+  @Column({ type: 'uuid' })
   influencerId: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+
+  @Column({ nullable: true, type: 'timestamptz' })
+  deletedAt: Date;
 }
