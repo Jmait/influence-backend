@@ -48,12 +48,12 @@ export class ReviewService {
     influencerId: string,
   ): Promise<{ records: Review[]; counts: number }> {
     const { query, pagination } = options;
-    const { offset: page, limit } = pagination;
+    const { offset, limit } = pagination;
     const reviews = this.reviewRepository
       .createQueryBuilder('review')
       .where('review.influencerId = :influencerId', { influencerId })
       .leftJoinAndSelect('review.user', 'user')
-      .skip((page - 1) * limit)
+      .skip(offset)
       .take(limit);
     if (query.sort) {
       this.applySorting(reviews, query.sort as string);
@@ -67,12 +67,12 @@ export class ReviewService {
     productId: string,
   ): Promise<{ records: ProductReview[]; counts: number }> {
     const { query, pagination } = options;
-    const { offset: page, limit } = pagination;
+    const { offset, limit } = pagination;
     const reviews = this.productReviewRepository
       .createQueryBuilder('product_reviews')
       .where('product_reviews.productId = :productId', { productId })
       .leftJoinAndSelect('product_reviews.user', 'user')
-      .skip((page - 1) * limit)
+      .skip(offset)
       .take(limit);
     if (query.sort) {
       this.applySorting(reviews, query.sort as string);
