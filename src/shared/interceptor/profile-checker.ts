@@ -4,13 +4,13 @@ import {
   ExecutionContext,
   NestInterceptor,
 } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { ModuleRef, Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { UserType } from 'src/components/auth/dto/auth.dto';
 import { SKIP_PROFILE_CHECK } from '../decorator/decorators';
 
 export class ProfileSetupCheckerInterceptor implements NestInterceptor {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   intercept(
     context: ExecutionContext,
@@ -20,8 +20,10 @@ export class ProfileSetupCheckerInterceptor implements NestInterceptor {
     if (!request.user) {
       return next.handle();
     }
-
-    const skip = this.reflector.get<boolean>(
+    const reflector = this.moduleRef.get(Reflector, {
+      strict: false,
+    });
+    const skip = reflector.get<boolean>(
       SKIP_PROFILE_CHECK,
       context.getHandler(),
     );
