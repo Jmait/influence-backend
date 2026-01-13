@@ -15,7 +15,7 @@ export class ShopService {
 
   async getAllShops(options: ProfileRequestOptions) {
     try {
-      let shops = await this.shopRepository
+      let shops = this.shopRepository
         .createQueryBuilder('shop')
         .leftJoin('shop.products', 'product')
         .leftJoinAndSelect('shop.influencer', 'influencer')
