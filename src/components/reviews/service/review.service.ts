@@ -69,9 +69,9 @@ export class ReviewService {
     const { query, pagination } = options;
     const { offset: page, limit } = pagination;
     const reviews = this.productReviewRepository
-      .createQueryBuilder('review')
-      .where('review.productId = :productId', { productId })
-      .leftJoinAndSelect('review.user', 'user')
+      .createQueryBuilder('product_reviews')
+      .where('product_reviews.productId = :productId', { productId })
+      .leftJoinAndSelect('product_reviews.user', 'user')
       .skip((page - 1) * limit)
       .take(limit);
     if (query.sort) {
