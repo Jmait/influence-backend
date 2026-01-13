@@ -14,6 +14,7 @@ import { GetUserPublicrofileDto } from 'src/components/user/dto/user.dto';
 import type { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
 import { JwtGuard } from 'src/components/auth/guards/jwt.guard';
 import { UpdateOrCreateInfluencerProfileDto } from 'src/components/auth/dto/auth.dto';
+import { SkipProfileCheck } from 'src/shared/decorator/decorators';
 
 @ApiTags('Influencer Management')
 @Controller('influencer')
@@ -39,6 +40,7 @@ export class InfluencerController {
 
   @ApiBearerAuth('Bearer')
   @Post('setup-profile')
+  @SkipProfileCheck()
   @UseGuards(JwtGuard)
   async createOrUpdateInfluencerProfile(
     @Body() body: UpdateOrCreateInfluencerProfileDto,
