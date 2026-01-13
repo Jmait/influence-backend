@@ -21,7 +21,7 @@ export class ReviewController {
     return { result };
   }
 
-  @Get(':productReviews/:productId')
+  @Get('product/:productId')
   async productReviews(
     @Param('productId') productId: string,
     @Req() req: ProfileRequestOptions,
