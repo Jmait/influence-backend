@@ -63,7 +63,7 @@ export class ProductsService {
       .leftJoinAndSelect('product.influencer', 'influencer')
       .leftJoinAndSelect('product.variants', 'variants')
       .leftJoinAndSelect('product.category', 'category')
-      .where('product.influecerId = :influencerId', { influencerId })
+      .where('product.influencerId = :influencerId', { influencerId })
       .andWhere('product.deletedAt IS NULL')
       .take(limit)
       .skip(offset);
