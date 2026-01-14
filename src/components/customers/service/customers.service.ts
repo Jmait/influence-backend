@@ -17,7 +17,7 @@ export class CustomersService {
       .createQueryBuilder('customer')
       .where('customer.influencerId = :influencerId', { influencerId })
       .andWhere('customer.deletedAt IS NULL')
-      .leftJoinAndSelect('customer.user', 'user')
+      // .leftJoinAndSelect('customer.user', 'user')
       .take(options.pagination.limit)
       .skip(options.pagination.offset);
 
