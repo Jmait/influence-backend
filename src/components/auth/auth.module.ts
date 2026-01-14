@@ -28,6 +28,6 @@ import { HttpModule } from '@nestjs/axios';
     GoogleStrategy,
     FacebookStrategy,
   ],
-  exports: [],
+  exports: [AuthService],
 })
 export class AuthModule {}

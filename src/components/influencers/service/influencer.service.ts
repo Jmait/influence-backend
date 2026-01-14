@@ -3,6 +3,7 @@ import {
   UpdateOrCreateInfluencerProfileDto,
   UserType,
 } from 'src/components/auth/dto/auth.dto';
+import { AuthService } from 'src/components/auth/service/auth.service';
 import { GetUserPublicrofileDto } from 'src/components/user/dto/user.dto';
 import { User } from 'src/components/user/entities/user.entity';
 import { UserService } from 'src/components/user/service/user.service';
@@ -10,7 +11,10 @@ import type { ProfileRequestOptions } from 'src/shared/interface/shared.interfac
 
 @Injectable()
 export class InfluencerService {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
+  ) {}
 
   async getInfluencerProfile(
     dto: GetUserPublicrofileDto,
@@ -38,10 +42,15 @@ export class InfluencerService {
     type: UserType,
     user: User,
   ) {
-    return await this.userService.createOrUpdateInfluencerProfile(
+    const profile = await this.userService.createOrUpdateInfluencerProfile(
       body,
       type,
       user,
     );
+    const token = this.authService.generateToken({
+      user: profile,
+      influencerProfileId: profile?.influencerProfile.influencerProfileId,
+    });
+    return { profile, token };
   }
 }

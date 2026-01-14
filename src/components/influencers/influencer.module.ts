@@ -5,9 +5,10 @@ import { InfluencerService } from './service/influencer.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { InfluencerProfile } from './entities/influencer.entity';
 import { User } from '../user/entities/user.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([InfluencerProfile, User])],
+  imports: [TypeOrmModule.forFeature([InfluencerProfile, User]), AuthModule],
   controllers: [InfluencerController],
   providers: [InfluencerService, UserService],
 })

@@ -90,7 +90,7 @@ export class AuthService {
     }
   }
 
-  private generateToken(payload: Record<string, any>): string {
+  generateToken(payload: Record<string, any>): string {
     console.log('Generating token with payload:', payload);
     return this.jwtService.sign(
       {
