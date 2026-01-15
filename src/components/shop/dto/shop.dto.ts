@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateShopDto {
   @IsString()
@@ -9,6 +9,15 @@ export class CreateShopDto {
   @IsString()
   @IsNotEmpty()
   categoryId?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsNotEmpty()
+  location: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }
 
 export class UpdateShopDto extends PartialType(CreateShopDto) {}
