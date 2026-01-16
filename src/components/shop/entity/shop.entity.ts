@@ -10,6 +10,16 @@ import {
 
 import { Entity } from 'typeorm';
 
+export class Location {
+  @Column()
+  name: string;
+
+  @Column('decimal', { precision: 10, scale: 7 })
+  lat: number;
+
+  @Column('decimal', { precision: 10, scale: 7 })
+  lng: number;
+}
 @Entity('shops')
 export class Shop {
   @PrimaryGeneratedColumn('uuid')
@@ -21,8 +31,8 @@ export class Shop {
   @Column({ type: 'varchar' })
   name: string;
 
-  @Column({ type: 'varchar', nullable: true })
-  location: string;
+  @Column(() => Location)
+  location: Location;
 
   @Column({ type: 'uuid' })
   influencerId: string;
