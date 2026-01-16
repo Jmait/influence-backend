@@ -57,6 +57,13 @@ export class ShopService {
 
       const shop = this.shopRepository.create({
         ...shopData,
+        location: shopData.location
+          ? {
+              name: shopData.location.locationName,
+              lat: shopData.location.locationLat,
+              lng: shopData.location.locationLng,
+            }
+          : undefined,
         influencerId: req.user.influencerProfileId,
       });
       return await this.shopRepository.save(shop);
@@ -97,7 +104,17 @@ export class ShopService {
       if (!shop) {
         throw new BadRequestException(SHOP_NOT_FOUND);
       }
-      await this.shopRepository.update(shopId, shopData);
+
+      await this.shopRepository.update(shopId, {
+        ...shopData,
+        location: shopData.location
+          ? {
+              name: shopData.location.locationName,
+              lat: shopData.location.locationLat,
+              lng: shopData.location.locationLng,
+            }
+          : undefined,
+      });
       return await this.shopRepository.findOne({
         where: { shopId },
       });
