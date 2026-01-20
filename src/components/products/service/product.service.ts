@@ -106,14 +106,19 @@ export class ProductsService {
             influencerId: Options.user.influencerProfileId,
           });
           const product = await transactionalEntityManager.save(productEntity);
-          for (let i = 0; i < productData.variants.length; i++) {
-            console.log(product);
-            const variantData = productData.variants[i];
-            const variant = transactionalEntityManager.create(ProductVariants, {
-              ...variantData,
-              productId: product.productId,
-            });
-            await transactionalEntityManager.save(variant);
+          if (product.variants && product.variants.length > 0) {
+            for (let i = 0; i < productData.variants.length; i++) {
+              console.log(product);
+              const variantData = productData.variants[i];
+              const variant = transactionalEntityManager.create(
+                ProductVariants,
+                {
+                  ...variantData,
+                  productId: product.productId,
+                },
+              );
+              await transactionalEntityManager.save(variant);
+            }
           }
           return transactionalEntityManager.findOne(Product, {
             where: { productId: product.productId },
