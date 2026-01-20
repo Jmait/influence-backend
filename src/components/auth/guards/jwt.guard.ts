@@ -12,8 +12,9 @@ export class JwtGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
+    
     console.log(isPublic);
-    if (isPublic == 'undefined' || isPublic) {
+    if ( isPublic) {
       return true;
     } else {
       return super.canActivate(context);

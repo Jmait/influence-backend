@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
 
 export class Location {
@@ -28,10 +29,10 @@ export class CreateShopDto {
   @IsNotEmpty()
   categoryId?: string;
 
-  @IsString()
   @IsOptional()
+  @ValidateNested()
   @Type(() => Location)
-  location: Location;
+  location?: Location;
 
   @IsBoolean()
   @IsOptional()
