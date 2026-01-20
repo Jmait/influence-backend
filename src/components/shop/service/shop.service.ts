@@ -50,11 +50,8 @@ export class ShopService {
   async createShop(
     shopData: CreateShopDto,
     req: ProfileRequestOptions,
-  ): Promise<any> {
+  ): Promise<Shop> {
     try {
-      console.log('Request user:', req.user);
-      console.log('Creating shop with data:', shopData);
-
       const shop = this.shopRepository.create({
         ...shopData,
         location: shopData.location
@@ -66,7 +63,9 @@ export class ShopService {
           : undefined,
         influencerId: req.user.influencerProfileId,
       });
-      return await this.shopRepository.save(shop);
+      const shopsdata = await this.shopRepository.save(shop);
+
+      return shopsdata;
     } catch (error) {
       throw new BadRequestException(error.message);
     }

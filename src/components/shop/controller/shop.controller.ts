@@ -35,11 +35,11 @@ export class ShopController {
   @ApiBearerAuth('Bearer')
   @Post()
   @UseGuards(JwtGuard)
-  create(
+  async create(
     @Body() createShopDto: CreateShopDto,
     @Req() req: ProfileRequestOptions,
   ) {
-    const result = this.shopService.createShop(createShopDto, req);
+    const result = await this.shopService.createShop(createShopDto, req);
     return SuccessResponse(result, 'Shop created successfully');
   }
 
