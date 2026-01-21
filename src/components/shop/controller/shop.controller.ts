@@ -21,8 +21,8 @@ import { SuccessResponse } from 'src/shared/utils/api-response';
 export class ShopController {
   constructor(private readonly shopService: ShopService) {}
   @Get()
-  getAllShops(@Req() req: ProfileRequestOptions) {
-    const result = this.shopService.getAllShops(req);
+  async getAllShops(@Req() req: ProfileRequestOptions) {
+    const result = await this.shopService.getAllShops(req);
     return SuccessResponse(result, 'All shops fetched successfully');
   }
 
