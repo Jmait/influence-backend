@@ -15,19 +15,19 @@ export class ShopService {
 
   async getAllShops(options: ProfileRequestOptions) {
     try {
-      let shops = this.shopRepository
+      let shopsEntity = this.shopRepository
         .createQueryBuilder('shop')
         .leftJoin('shop.products', 'product')
         .leftJoinAndSelect('shop.influencer', 'influencer')
         .loadRelationCountAndMap('shop.productCount', 'shop.products')
         .where('shop.deletedAt IS NULL');
       if (options.query.q) {
-        shops = shops.andWhere('shop.name ILIKE :name', {
+        shopsEntity = shopsEntity.andWhere('shop.name ILIKE :name', {
           name: `%${options.query.q}%`,
         });
       }
-      const [totalRecords, count] = await shops.getManyAndCount();
-      return { totalRecords, count };
+      const [shops, count] = await shopsEntity.getManyAndCount();
+      return { shops, count };
     } catch (error) {
       throw new BadRequestException(error.message);
     }
