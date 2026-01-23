@@ -39,4 +39,9 @@ export class CreateShopDto {
   isActive?: boolean;
 }
 
+export interface ShopImageUploadDto {
+  coverImage?: string;
+  shopLogo?: string;
+}
+
 export class UpdateShopDto extends PartialType(CreateShopDto) {}

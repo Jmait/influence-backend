@@ -19,8 +19,12 @@ export class Product {
   @Column()
   name: string;
 
-  @Column({ nullable: true })
-  image: string;
+  @Column({
+    type: 'text',
+    array: true,
+    nullable: true,
+  })
+  images: string[];
 
   @Column({ nullable: true })
   sku: string;
