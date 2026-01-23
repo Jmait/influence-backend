@@ -6,12 +6,15 @@ import { CreateProductDto, UpdateProductDto } from '../dto/product.dto';
 import { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
 import { ProductVariants } from '../entities/product-variants.entity';
 import { PRODUCT_NOT_FOUND } from 'src/shared/utils/error.utils';
+import { StorageService } from 'src/components/storage/storage.service';
+import { console } from 'inspector';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    private readonly storageService: StorageService,
   ) {}
 
   buildFilter(query: any) {
@@ -97,8 +100,10 @@ export class ProductsService {
   async create(
     productData: CreateProductDto,
     Options: ProfileRequestOptions,
+    files: Express.Multer.File[],
   ): Promise<Product | null> {
     try {
+      const profileId = Options.user.influencerProfileId;
       return await this.productRepository.manager.transaction(
         async (transactionalEntityManager) => {
           const productEntity = transactionalEntityManager.create(Product, {
@@ -120,6 +125,35 @@ export class ProductsService {
               await transactionalEntityManager.save(variant);
             }
           }
+
+          const uploadedImages: string[] = [];
+          for (let i = 0; i < files.length; i++) {
+            const file = this.storageService.getFileByField(
+              `productImage_${i}`,
+              files,
+            );
+            if (file) {
+              const fileUrl = (
+                await this.storageService.uploadPublicFiles(file.buffer, {
+                  userId: profileId,
+                  service: 'products',
+                  folder: 'product-images',
+                  file_name: `${file.originalname}-${product.productId}`,
+                  content_type: file.mimetype,
+                })
+              ).file_url;
+              uploadedImages.push(fileUrl);
+            }
+          }
+          if (uploadedImages.length > 0) {
+            await transactionalEntityManager.update(
+              Product,
+              product.productId,
+              {
+                images: uploadedImages,
+              },
+            );
+          }
           return transactionalEntityManager.findOne(Product, {
             where: { productId: product.productId },
             relations: ['variants'],
@@ -134,7 +168,9 @@ export class ProductsService {
   async update(
     productId: string,
     body: UpdateProductDto,
+    files: Express.Multer.File[],
   ): Promise<Product | null> {
+    console.log('hello update');
     try {
       const product = await this.productRepository.findOne({
         where: { productId },
@@ -142,6 +178,7 @@ export class ProductsService {
       if (!product) {
         throw new BadRequestException(PRODUCT_NOT_FOUND);
       }
+      const profileId = product.influencerId;
       return await this.productRepository.manager.transaction(
         async (transactionalEntityManager) => {
           const updatedProduct = transactionalEntityManager.merge(
@@ -149,6 +186,7 @@ export class ProductsService {
             product,
             body,
           );
+
           for (const variant of body.variants || []) {
             await transactionalEntityManager.update(
               ProductVariants,
@@ -156,7 +194,45 @@ export class ProductsService {
               variant,
             );
           }
-          return transactionalEntityManager.save(updatedProduct);
+          await transactionalEntityManager.save(updatedProduct);
+          const uploadedImages: string[] = [];
+          for (let i = 0; i < files.length; i++) {
+            const file = this.storageService.getFileByField(
+              `productImage_${i}`,
+              files,
+            );
+            if (file) {
+              console.log('Uploaded images:', uploadedImages);
+              const fileUrl = (
+                await this.storageService.uploadPublicFiles(file.buffer, {
+                  userId: profileId,
+                  service: 'products',
+                  folder: 'product-images',
+                  file_name: `${file.originalname}-${product.productId}`,
+                  content_type: file.mimetype,
+                })
+              ).file_url;
+              uploadedImages.push(fileUrl);
+            }
+            if (uploadedImages.length > 0) {
+              await transactionalEntityManager.update(Product, productId, {
+                images: uploadedImages,
+              });
+              const newImageKey = this.storageService.extractS3Key(
+                uploadedImages[i],
+              );
+              const existingImageKey = this.storageService.extractS3Key(
+                product.images[i],
+              );
+              if (existingImageKey && existingImageKey != newImageKey) {
+                await this.storageService.deleteFile(existingImageKey);
+              }
+            }
+          }
+          return this.productRepository.findOne({
+            where: { productId: updatedProduct.productId },
+            relations: ['variants'],
+          });
         },
       );
     } catch (error) {

@@ -8,6 +8,8 @@ import {
   Patch,
   Param,
   Delete,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 
 import { Product } from '../entities/product.entity';
@@ -18,6 +20,7 @@ import type { ProfileRequestOptions } from 'src/shared/interface/shared.interfac
 import { JwtGuard } from 'src/components/auth/guards/jwt.guard';
 import { SuccessResponse } from 'src/shared/utils/api-response';
 import { SUCCESS_MESSAGES } from 'src/shared/utils/success.utils';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Product Management')
 @Controller('products')
@@ -41,23 +44,27 @@ export class ProductsController {
 
   @Post()
   @ApiBearerAuth('Bearer')
+  @UseInterceptors(AnyFilesInterceptor())
   @UseGuards(JwtGuard)
   async create(
     @Body() product: CreateProductDto,
     @Req() req: ProfileRequestOptions,
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
-    const result = await this.productsService.create(product, req);
+    const result = await this.productsService.create(product, req, files);
     return SuccessResponse(result, SUCCESS_MESSAGES.PRODUCT_CREATED);
   }
 
   @Patch(':productId')
   @ApiBearerAuth('Bearer')
+  @UseInterceptors(AnyFilesInterceptor())
   @UseGuards(JwtGuard)
   async update(
     @Body() product: UpdateProductDto,
     @Param('productId') productId: string,
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
-    const result = await this.productsService.update(productId, product);
+    const result = await this.productsService.update(productId, product, files);
     return SuccessResponse(result, SUCCESS_MESSAGES.PRODUCT_UPDATED);
   }
 

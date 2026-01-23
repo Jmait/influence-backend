@@ -1,16 +1,22 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateShopDto, UpdateShopDto } from '../dto/shop.dto';
+import {
+  CreateShopDto,
+  ShopImageUploadDto,
+  UpdateShopDto,
+} from '../dto/shop.dto';
 import { Repository } from 'typeorm';
 import { Shop } from '../entity/shop.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
 import { SHOP_NOT_FOUND } from 'src/shared/utils/error.utils';
+import { StorageService } from 'src/components/storage/storage.service';
 
 @Injectable()
 export class ShopService {
   constructor(
     @InjectRepository(Shop)
-    private readonly shopRepository: Repository<Shop>, // Replace 'any' with actual repository type
+    private readonly shopRepository: Repository<Shop>,
+    private readonly storageService: StorageService,
   ) {}
 
   async getAllShops(options: ProfileRequestOptions) {
@@ -50,8 +56,10 @@ export class ShopService {
   async createShop(
     shopData: CreateShopDto,
     req: ProfileRequestOptions,
+    files: Express.Multer.File[],
   ): Promise<Shop> {
     try {
+      const profileId = req.user.influencerProfileId;
       const shop = this.shopRepository.create({
         ...shopData,
         location: shopData.location
@@ -63,9 +71,32 @@ export class ShopService {
           : undefined,
         influencerId: req.user.influencerProfileId,
       });
-      const shopsdata = await this.shopRepository.save(shop);
+      const newShop = await this.shopRepository.save(shop);
 
-      return shopsdata;
+      const imageFields = ['coverImage', 'shopLogo'] as const;
+      const images: ShopImageUploadDto = {};
+      for (const field of imageFields) {
+        const file = this.storageService.getFileByField(field, files);
+        if (file) {
+          // Upload the file and get the URL
+          const fileUrl = (
+            await this.storageService.uploadFile(file.buffer, {
+              userId: profileId,
+              service: 'shop',
+              folder: 'shops-images',
+              file_name: shop.shopId,
+              content_type: file.mimetype,
+            })
+          ).file_url;
+          images[field] = fileUrl;
+          console.log(`Uploaded image for ${field}: ${fileUrl}`);
+        }
+      }
+      await this.shopRepository.update(newShop.shopId, {
+        coverImage: images.coverImage,
+        logo: images.shopLogo,
+      });
+      return newShop;
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -95,7 +126,12 @@ export class ShopService {
     }
   }
 
-  async updateShop(shopId: string, shopData: UpdateShopDto) {
+  async updateShop(
+    shopId: string,
+    shopData: UpdateShopDto,
+    files: Express.Multer.File[],
+    req: ProfileRequestOptions,
+  ) {
     try {
       const shop = await this.shopRepository.findOne({
         where: { shopId },
@@ -103,21 +139,49 @@ export class ShopService {
       if (!shop) {
         throw new BadRequestException(SHOP_NOT_FOUND);
       }
+      const profileId = req.user.influencerProfileId;
+
+      const imageFields = ['coverImage', 'shopLogo'] as const;
+      let images: ShopImageUploadDto = {};
+      for (const field of imageFields) {
+        const file = this.storageService.getFileByField(field, files);
+
+        if (file) {
+          const fileUrl = (
+            await this.storageService.uploadPublicFiles(file.buffer, {
+              userId: profileId,
+              service: 'shop',
+              folder: 'shops-images',
+              file_name: `${file.originalname}-${shop.shopId}`,
+              content_type: file.mimetype,
+            })
+          ).file_url;
+          images[field] = fileUrl;
+
+          const existingImageKey = this.storageService.extractS3Key(
+            field === 'coverImage' ? shop.coverImage : shop.logo,
+          );
+          if (existingImageKey) {
+            await this.storageService.deleteFile(existingImageKey);
+          }
+        }
+      }
 
       await this.shopRepository.update(shopId, {
         ...shopData,
-        location: shopData.location
-          ? {
-              name: shopData.location.locationName,
-              lat: shopData.location.locationLat,
-              lng: shopData.location.locationLng,
-            }
-          : undefined,
+        coverImage: images.coverImage,
+        logo: images.shopLogo,
+        location: {
+          name: shopData.location?.locationName ?? '',
+          lat: shopData.location?.locationLat || 0,
+          lng: shopData.location?.locationLng || 0,
+        },
       });
       return await this.shopRepository.findOne({
         where: { shopId },
       });
     } catch (error) {
+      console.log(error);
       throw new BadRequestException(error.mnessage);
     }
   }

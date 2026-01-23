@@ -1,4 +1,5 @@
 import { PartialType } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -16,6 +17,7 @@ export class CreateProductDto {
 
   @IsNumber()
   @IsNotEmpty()
+  @Transform(({ value }) => Number(value))
   price: number;
 
   @IsString()

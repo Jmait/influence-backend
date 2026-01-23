@@ -8,6 +8,8 @@ import {
   Req,
   Patch,
   Delete,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CreateShopDto, UpdateShopDto } from '../dto/shop.dto';
@@ -15,6 +17,7 @@ import { ShopService } from '../service/shop.service';
 import { JwtGuard } from 'src/components/auth/guards/jwt.guard';
 import type { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
 import { SuccessResponse } from 'src/shared/utils/api-response';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Boutique Management')
 @Controller('shop')
@@ -34,12 +37,14 @@ export class ShopController {
 
   @ApiBearerAuth('Bearer')
   @Post()
+  @UseInterceptors(AnyFilesInterceptor())
   @UseGuards(JwtGuard)
   async create(
     @Body() createShopDto: CreateShopDto,
     @Req() req: ProfileRequestOptions,
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
-    const result = await this.shopService.createShop(createShopDto, req);
+    const result = await this.shopService.createShop(createShopDto, req, files);
     return SuccessResponse(result, 'Shop created successfully');
   }
 
@@ -54,9 +59,20 @@ export class ShopController {
 
   @Patch(':shopId')
   @UseGuards(JwtGuard)
+  @UseInterceptors(AnyFilesInterceptor())
   @ApiBearerAuth('Bearer')
-  update(@Param('shopId') id: string, @Body() updateShopDto: UpdateShopDto) {
-    const result = this.shopService.updateShop(id, updateShopDto);
+  async update(
+    @Param('shopId') id: string,
+    @Body() updateShopDto: UpdateShopDto,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Req() req: ProfileRequestOptions,
+  ) {
+    const result = await this.shopService.updateShop(
+      id,
+      updateShopDto,
+      files,
+      req,
+    );
     return SuccessResponse(result, 'Shop updated successfully');
   }
 
