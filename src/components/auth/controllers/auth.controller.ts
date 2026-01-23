@@ -46,20 +46,20 @@ export class AuthController {
   }
 
   // Create or Update Influencer Profile
-  @ApiBearerAuth('Bearer')
-  @Post('influencer-profile')
-  @UseGuards(JwtGuard)
-  async createOrUpdateInfluencerProfile(
-    @Body() body: UpdateOrCreateInfluencerProfileDto,
-    @Req() req,
-  ) {
-    console.log(req.user);
-    return await this.authService.createOrUpdateInfluencerProfile(
-      body,
-      req.user.type,
-      req.user,
-    );
-  }
+  // @ApiBearerAuth('Bearer')
+  // @Post('influencer-profile')
+  // @UseGuards(JwtGuard)
+  // async createOrUpdateInfluencerProfile(
+  //   @Body() body: UpdateOrCreateInfluencerProfileDto,
+  //   @Req() req,
+  // ) {
+  //   console.log(req.user);
+  //   return await this.authService.createOrUpdateInfluencerProfile(
+  //     body,
+  //     req.user.type,
+  //     req.user,
+  //   );
+  // }
 
   // Google OAuth
   @Get('google')

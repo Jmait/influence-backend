@@ -75,6 +75,9 @@ export class InfluencerProfile {
   @Column({ type: 'text', nullable: true })
   coverImage: string;
 
+  @Column({ type: 'text', nullable: true, array: true })
+  profileImages: string[];
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
