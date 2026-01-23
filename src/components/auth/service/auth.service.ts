@@ -128,17 +128,17 @@ export class AuthService {
     return { token, user };
   }
 
-  async createOrUpdateInfluencerProfile(
-    body: UpdateOrCreateInfluencerProfileDto,
-    type: UserType,
-    user: User,
-  ) {
-    return await this.userService.createOrUpdateInfluencerProfile(
-      body,
-      type,
-      user,
-    );
-  }
+  // async createOrUpdateInfluencerProfile(
+  //   body: UpdateOrCreateInfluencerProfileDto,
+  //   type: UserType,
+  //   user: User,
+  // ) {
+  //   return await this.userService.createOrUpdateInfluencerProfile(
+  //     body,
+  //     type,
+  //     user,
+  //   );
+  // }
 
   async connectTikTokAccount() {
     // TikTok account connection logic here

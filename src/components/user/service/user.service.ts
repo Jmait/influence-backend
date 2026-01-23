@@ -15,6 +15,7 @@ import {
   SocialMedia,
 } from '../dto/user.dto';
 import { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
+import { StorageService } from 'src/components/storage/storage.service';
 
 @Injectable()
 export class UserService {
@@ -23,6 +24,8 @@ export class UserService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(InfluencerProfile)
     private readonly influencerRepo: Repository<InfluencerProfile>,
+
+    private readonly storageService: StorageService,
   ) {}
 
   async createUser(body: RegisterDto) {
@@ -47,14 +50,43 @@ export class UserService {
     body: UpdateOrCreateInfluencerProfileDto,
     type: UserType,
     user: User,
+    files: Express.Multer.File[],
   ) {
     try {
       if (user.type === UserType.INFLUENCER) {
         const existingProfile = await this.influencerRepo.findOne({
           where: { userId: user.userId },
         });
+        const profileId = user.userId;
+
+        let uploadedImages: string[] = [];
+        if (files && files.length > 0) {
+          const { uploadedImages: images } = await this.uploadProfileImages(
+            files,
+            existingProfile,
+            profileId,
+          );
+          uploadedImages = images;
+        }
+
+        let coverImage: string | null = null;
+        if (files && files.length > 0) {
+          coverImage = await this.uploadCoverImage(
+            files,
+            profileId,
+            existingProfile,
+          );
+        }
+
         if (existingProfile) {
-          Object.assign(existingProfile, body);
+          Object.assign(existingProfile, {
+            ...body,
+            profileImages:
+              uploadedImages.length > 0
+                ? uploadedImages
+                : existingProfile.profileImages,
+            coverImage: coverImage || existingProfile.coverImage,
+          });
           await this.influencerRepo.save(existingProfile);
           return await this.userRepo.findOne({
             where: { userId: user.userId },
@@ -63,9 +95,10 @@ export class UserService {
         }
         const profile = this.influencerRepo.create({
           ...body,
+          profileImages: uploadedImages,
+          coverImage: coverImage || undefined,
           userId: user.userId,
         });
-        console.log('hi profile');
         await this.influencerRepo.save(profile);
       }
       return await this.userRepo.findOne({
@@ -75,6 +108,97 @@ export class UserService {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+
+  private async uploadProfileImages(
+    files: Express.Multer.File[],
+    existingProfile: InfluencerProfile | null,
+    profileId: string,
+  ): Promise<{ uploadedImages: string[] }> {
+    const uploadedImages: string[] = [];
+    if (!files || files.length === 0) {
+      return { uploadedImages };
+    }
+    for (let i = 0; i < files.length; i++) {
+      const profileImagesFile = this.storageService.getFileByField(
+        `profileImages_${i}`,
+        files,
+      );
+
+      if (profileImagesFile) {
+        console.log('Uploaded images:', uploadedImages);
+        const fileUrl = (
+          await this.storageService.uploadPublicFiles(
+            profileImagesFile.buffer,
+            {
+              userId: profileId,
+              service: 'profiles',
+              folder: 'profile-images',
+              file_name: `${profileImagesFile.originalname}-${profileId}`,
+              content_type: profileImagesFile.mimetype,
+            },
+          )
+        ).file_url;
+        uploadedImages.push(fileUrl);
+      }
+      if (uploadedImages.length > 0) {
+        const newImageKey = this.storageService.extractS3Key(uploadedImages[i]);
+        if (existingProfile?.profileImages) {
+          const existingImageKey = this.storageService.extractS3Key(
+            existingProfile?.profileImages[i],
+          );
+          if (existingImageKey && existingImageKey != newImageKey) {
+            await this.storageService.deleteFile(existingImageKey);
+          }
+        }
+      }
+    }
+
+    return { uploadedImages };
+  }
+
+  private async uploadCoverImage(
+    files: Express.Multer.File[],
+    profileId: string,
+    existingProfile: InfluencerProfile | null,
+  ) {
+    let coverImage: string | null = null;
+    if (!files || files.length === 0) {
+      return coverImage;
+    }
+    const coverImageFile = this.storageService.getFileByField(
+      'coverImage',
+      files,
+    );
+
+    if (coverImageFile) {
+      const fileUrl = (
+        await this.storageService.uploadPublicFiles(coverImageFile.buffer, {
+          userId: profileId,
+          service: 'profiles',
+          folder: 'profile-images',
+          file_name: `${coverImageFile.originalname}-${profileId}`,
+          content_type: coverImageFile.mimetype,
+        })
+      ).file_url;
+      coverImage = fileUrl;
+    }
+
+    if (existingProfile) {
+      const newImageKey = this.storageService.extractS3Key(
+        existingProfile?.coverImage,
+      );
+      if (existingProfile?.profileImages) {
+        const existingImageKey = this.storageService.extractS3Key(
+          existingProfile?.coverImage,
+        );
+        if (existingImageKey && existingImageKey != newImageKey) {
+          await this.storageService.deleteFile(existingImageKey);
+        }
+      }
+    }
+
+    return coverImage;
   }
 
   async connectInfluencerSocialMedia(dto: SocialMedia) {

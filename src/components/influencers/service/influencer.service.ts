@@ -4,6 +4,7 @@ import {
   UserType,
 } from 'src/components/auth/dto/auth.dto';
 import { AuthService } from 'src/components/auth/service/auth.service';
+import { StorageService } from 'src/components/storage/storage.service';
 import { GetUserPublicrofileDto } from 'src/components/user/dto/user.dto';
 import { User } from 'src/components/user/entities/user.entity';
 import { UserService } from 'src/components/user/service/user.service';
@@ -14,6 +15,7 @@ export class InfluencerService {
   constructor(
     private readonly userService: UserService,
     private readonly authService: AuthService,
+    private readonly storageService: StorageService,
   ) {}
 
   async getInfluencerProfile(
@@ -41,11 +43,13 @@ export class InfluencerService {
     body: UpdateOrCreateInfluencerProfileDto,
     type: UserType,
     user: User,
+    files: Express.Multer.File[],
   ) {
     const profile = await this.userService.createOrUpdateInfluencerProfile(
       body,
       type,
       user,
+      files,
     );
     const token = this.authService.generateToken({
       user: profile,

@@ -16,6 +16,9 @@ export class User {
   @Column()
   lastName: string;
 
+  @Column({ nullable: true, type: 'text' })
+  profileImage: string;
+
   @Column({ nullable: true })
   type: string;
 
