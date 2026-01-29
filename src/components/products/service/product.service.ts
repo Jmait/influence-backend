@@ -187,14 +187,18 @@ export class ProductsService {
             body,
           );
 
-          for (const variant of body.variants || []) {
-            await transactionalEntityManager.update(
-              ProductVariants,
-              variant.variantId,
-              variant,
-            );
+          if (body.variants && product.variants.length > 0) {
+            for (const variantData of body.variants) {
+              const variant = transactionalEntityManager.create(
+                ProductVariants,
+                {
+                  ...variantData,
+                  productId: product.productId,
+                },
+              );
+              await transactionalEntityManager.save(variant);
+            }
           }
-          await transactionalEntityManager.save(updatedProduct);
           const uploadedImages: string[] = [];
           for (let i = 0; i < files.length; i++) {
             const file = this.storageService.getFileByField(
