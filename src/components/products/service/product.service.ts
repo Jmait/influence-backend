@@ -187,7 +187,7 @@ export class ProductsService {
             body,
           );
 
-          if (body.variants && product.variants.length > 0) {
+          if (body.variants && body.variants.length > 0) {
             for (const variantData of body.variants) {
               const variant = transactionalEntityManager.create(
                 ProductVariants,
