@@ -179,12 +179,13 @@ export class ProductsService {
         throw new BadRequestException(PRODUCT_NOT_FOUND);
       }
       const profileId = product.influencerId;
+      const { variants, ...other } = body;
       return await this.productRepository.manager.transaction(
         async (transactionalEntityManager) => {
-          const updatedProduct = transactionalEntityManager.merge(
+          await transactionalEntityManager.update(
             Product,
-            product,
-            body,
+            { productId },
+            { ...other },
           );
 
           if (body.variants && body.variants.length > 0) {
@@ -235,8 +236,8 @@ export class ProductsService {
               }
             }
           }
-          return this.productRepository.findOne({
-            where: { productId: updatedProduct.productId },
+          return await this.productRepository.findOne({
+            where: { productId: productId },
             relations: ['variants'],
           });
         },
