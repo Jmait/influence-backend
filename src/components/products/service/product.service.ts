@@ -200,36 +200,38 @@ export class ProductsService {
             }
           }
           const uploadedImages: string[] = [];
-          for (let i = 0; i < files.length; i++) {
-            const file = this.storageService.getFileByField(
-              `productImage_${i}`,
-              files,
-            );
-            if (file) {
-              console.log('Uploaded images:', uploadedImages);
-              const fileUrl = (
-                await this.storageService.uploadPublicFiles(file.buffer, {
-                  userId: profileId,
-                  service: 'products',
-                  folder: 'product-images',
-                  file_name: `${file.originalname}-${product.productId}`,
-                  content_type: file.mimetype,
-                })
-              ).file_url;
-              uploadedImages.push(fileUrl);
-            }
-            if (uploadedImages.length > 0) {
-              await transactionalEntityManager.update(Product, productId, {
-                images: uploadedImages,
-              });
-              const newImageKey = this.storageService.extractS3Key(
-                uploadedImages[i],
+          if (files && files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+              const file = this.storageService.getFileByField(
+                `productImage_${i}`,
+                files,
               );
-              const existingImageKey = this.storageService.extractS3Key(
-                product.images[i],
-              );
-              if (existingImageKey && existingImageKey != newImageKey) {
-                await this.storageService.deleteFile(existingImageKey);
+              if (file) {
+                console.log('Uploaded images:', uploadedImages);
+                const fileUrl = (
+                  await this.storageService.uploadPublicFiles(file.buffer, {
+                    userId: profileId,
+                    service: 'products',
+                    folder: 'product-images',
+                    file_name: `${file.originalname}-${product.productId}`,
+                    content_type: file.mimetype,
+                  })
+                ).file_url;
+                uploadedImages.push(fileUrl);
+              }
+              if (uploadedImages.length > 0) {
+                await transactionalEntityManager.update(Product, productId, {
+                  images: uploadedImages,
+                });
+                const newImageKey = this.storageService.extractS3Key(
+                  uploadedImages[i],
+                );
+                const existingImageKey = this.storageService.extractS3Key(
+                  product.images[i],
+                );
+                if (existingImageKey && existingImageKey != newImageKey) {
+                  await this.storageService.deleteFile(existingImageKey);
+                }
               }
             }
           }
