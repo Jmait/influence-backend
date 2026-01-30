@@ -348,7 +348,7 @@ export class AuthService {
     const clientId = process.env.GOOGLE_CLIENT_ID || '';
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET || '';
     const redirectUri =
-      process.env.GOOGLE_REDIRECT_URI ||
+      process.env.YOUTUBE_CALLBACK_URL ||
       'https://153af3752118.ngrok-free.app/auth/youtube/callback';
     try {
       const response = await firstValueFrom(
