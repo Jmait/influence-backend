@@ -13,6 +13,7 @@ import { UseGuards, Req, Get } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { GoogleAuthGuard } from '../strategies/google.strategy';
 import { JwtGuard } from '../guards/jwt.guard';
+import type { Response } from 'express';
 
 @ApiTags('Auth Management')
 @Controller('auth')
@@ -75,14 +76,20 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleAuthCallback(@Req() req, @Query('state') state: string) {
+  async googleAuthCallback(
+    @Req() req,
+    @Query('state') state: string,
+    @Res() res: Response,
+  ) {
     // If user exists, log in; else, sign up
 
     // return state;
-    return this.authService.socialLoginOrSignup({
+    const { token } = await this.authService.socialLoginOrSignup({
       ...req.user,
       type: req.query.state,
     });
+
+    return res.redirect(`${process.env.FRONTEND_URL}?token=${token}`);
   }
 
   // Facebook OAuth
