@@ -63,6 +63,7 @@ export class OrdersService {
       }
 
       let paymentClientSecret: string = '';
+      let newOrderId: string = '';
       for (let index = 0; index < items.length; index++) {
         const element = items[index];
         const [product, campaign] = await Promise.all([
@@ -94,6 +95,7 @@ export class OrdersService {
           const savedOrder = await transactionalEntityManager.save(order);
 
           if (savedOrder) {
+            newOrderId = savedOrder.orderId;
             for (let index = 0; index < items.length; index++) {
               const element = items[index];
               const orderItem = this.orderItem.create({
@@ -136,8 +138,11 @@ export class OrdersService {
           paymentClientSecret = clientSecret ?? '';
         },
       );
-
-      return { clientSecret: paymentClientSecret };
+      const order = await this.orderRepo.findOne({
+        where: { orderId: newOrderId },
+        select: ['items'],
+      });
+      return { clientSecret: paymentClientSecret, order };
     } catch (error) {
       this.logger.error(`Error creating new order: ${error.message}`);
       throw new BadRequestException(error.message);
