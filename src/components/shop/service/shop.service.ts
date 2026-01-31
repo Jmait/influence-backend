@@ -96,7 +96,11 @@ export class ShopService {
         coverImage: images.coverImage,
         logo: images.shopLogo,
       });
-      return newShop;
+      return (
+        (await this.shopRepository.findOne({
+          where: { shopId: newShop.shopId },
+        })) ?? newShop
+      );
     } catch (error) {
       throw new BadRequestException(error.message);
     }
