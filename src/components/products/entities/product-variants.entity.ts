@@ -18,6 +18,9 @@ export class ProductVariants {
   @Column({ type: 'varchar' })
   variantName: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  type: string;
+
   @Column({ type: 'decimal', default: 0 })
   quantity: number;
 
