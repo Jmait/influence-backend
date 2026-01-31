@@ -111,7 +111,7 @@ export class ProductsService {
             influencerId: Options.user.influencerProfileId,
           });
           const product = await transactionalEntityManager.save(productEntity);
-          if (product.variants && product.variants.length > 0) {
+          if (productData.variants && productData.variants.length > 0) {
             for (let i = 0; i < productData.variants.length; i++) {
               console.log(product);
               const variantData = productData.variants[i];

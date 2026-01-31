@@ -60,6 +60,10 @@ class ProductVariantsDto {
   @IsNotEmpty()
   variantName: string;
 
+  @IsString()
+  @IsNotEmpty()
+  type: string;
+
   @IsOptional()
   @IsNumber()
   price?: number;
