@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsNotEmpty,
@@ -15,9 +15,11 @@ export class Location {
   locationName: string;
 
   @IsNumber()
+  @Transform(({ value }) => Number(value))
   locationLat: number;
 
   @IsNumber()
+  @Transform(({ value }) => Number(value))
   locationLng: number;
 }
 export class CreateShopDto {
