@@ -30,8 +30,9 @@ export class ShopController {
   }
 
   @Get(':shopId')
-  getShopDetails(@Param('shopId') shopId: string) {
-    const result = this.shopService.getShopDetails(shopId);
+  async getShopDetails(@Param('shopId') shopId: string) {
+    const result = await this.shopService.getShopDetails(shopId);
+    console.log(result, 'result');
     return SuccessResponse(result, 'Shop details fetched successfully');
   }
 
@@ -79,8 +80,8 @@ export class ShopController {
   @Delete(':shopId')
   @UseGuards(JwtGuard)
   @ApiBearerAuth('Bearer')
-  delete(@Param('shopId') id: string) {
-    const result = this.shopService.deleteShop(id);
+  async delete(@Param('shopId') id: string) {
+    const result = await this.shopService.deleteShop(id);
     return SuccessResponse(result, 'Shop deleted successfully');
   }
 }
