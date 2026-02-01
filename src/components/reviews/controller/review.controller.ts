@@ -31,13 +31,14 @@ export class ReviewController {
   }
 
   @Post()
-  create(@Body() createReviewDto: ReviewDto) {
-    return this.reviewService.create(createReviewDto);
+  async create(@Body() createReviewDto: ReviewDto) {
+    return await this.reviewService.create(createReviewDto);
   }
 
   @Post('product')
-  createProductReviews(@Body() createReviewDto: ProductReviewDto) {
-    const result = this.reviewService.createProductReview(createReviewDto);
+  async createProductReviews(@Body() createReviewDto: ProductReviewDto) {
+    const result =
+      await this.reviewService.createProductReview(createReviewDto);
     return result;
   }
 }
