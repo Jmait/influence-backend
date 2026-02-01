@@ -44,6 +44,9 @@ export class Product {
   @Column({ type: 'uuid', nullable: true })
   categoryId: string;
 
+  @Column({ type: 'uuid', nullable: true })
+  subCategoryId: string;
+
   @Column({ type: 'decimal', default: 0 })
   quantity: number;
 
