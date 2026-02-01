@@ -47,6 +47,7 @@ export class ShopService {
       if (!shop) {
         throw new BadRequestException(SHOP_NOT_FOUND);
       }
+      console.log(shop);
       return shop;
     } catch (error) {
       throw new BadRequestException(error.message);
