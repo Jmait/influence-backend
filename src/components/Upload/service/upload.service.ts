@@ -25,7 +25,7 @@ export class UploadService {
     }
     const uploadedImagesId: UploadedFilesInterface[] = [];
     for (let i = 0; i < files.length; i++) {
-      const file = this.storageService.getFileByField(`image_${i}`, files);
+      const file = this.storageService.getFileByField(`file_${i}`, files);
       if (file) {
         const fileUrl = (
           await this.storageService.uploadPublicFiles(file.buffer, {
