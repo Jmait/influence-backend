@@ -10,6 +10,8 @@ import { OrdersModule } from './orders/orders.module';
 import { CustomersModule } from './customers/customers.module';
 import { InfluencerCategoryModule } from './influencer-category/influencer-category.module';
 import { ShippingAddressModule } from './shipping/shipping.module';
+import { MessagesModule } from './messages/messages.module';
+import { UploadModule } from './Upload/upload.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { ShippingAddressModule } from './shipping/shipping.module';
     OrdersModule,
     CustomersModule,
     ShippingAddressModule,
+    MessagesModule,
+    UploadModule,
     InfluencerCategoryModule,
   ],
 })
