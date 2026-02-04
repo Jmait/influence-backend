@@ -17,7 +17,7 @@ export class ProductsService {
     private readonly storageService: StorageService,
   ) {}
 
-  buildFilter(query: any) {
+  buildProductFilter(query: any) {
     const filters = {};
     if (query.name) {
       filters['name'] = query.name;

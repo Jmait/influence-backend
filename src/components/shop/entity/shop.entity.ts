@@ -40,6 +40,9 @@ export class Shop {
   @Column({ type: 'timestamp', nullable: true })
   deletedAt: Date;
 
+  @Column({ type: 'timestamp', nullable: true })
+  suspendedAt: Date;
+
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 

@@ -78,6 +78,12 @@ export class InfluencerProfile {
   @Column({ type: 'text', nullable: true, array: true })
   profileImages: string[];
 
+  @Column({ type: 'timestamp', nullable: true })
+  blockedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt: Date;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 

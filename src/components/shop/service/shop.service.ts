@@ -205,4 +205,81 @@ export class ShopService {
       throw new BadRequestException(error.message);
     }
   }
+
+  // Admin methods
+  async getShopsForAdmin(options: ProfileRequestOptions) {
+    try {
+      let shopsEntity = this.shopRepository
+        .createQueryBuilder('shop')
+        .leftJoin('shop.products', 'product')
+        .leftJoinAndSelect('shop.influencer', 'influencer')
+        .loadRelationCountAndMap('shop.productCount', 'shop.products');
+
+      if (options.query.q) {
+        shopsEntity = shopsEntity.andWhere('shop.name ILIKE :name', {
+          name: `%${options.query.q}%`,
+        });
+      }
+
+      const [shops, count] = await shopsEntity.getManyAndCount();
+      return { shops, count };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async suspendShop(shopId: string) {
+    try {
+      const shop = await this.shopRepository.findOne({
+        where: { shopId },
+      });
+      if (!shop) {
+        throw new BadRequestException(SHOP_NOT_FOUND);
+      }
+
+      // Toggle suspension: if suspended, unsuspend; if not suspended, suspend
+      const suspendedAt = shop.suspendedAt ? null : new Date();
+      const updateData: any = { suspendedAt };
+      await this.shopRepository.update(shopId, updateData);
+
+      return {
+        message: suspendedAt
+          ? 'Shop suspended successfully'
+          : 'Shop unsuspended successfully',
+        suspendedAt,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async deleteShopPermanently(shopId: string) {
+    try {
+      const shop = await this.shopRepository.findOne({
+        where: { shopId },
+      });
+      if (!shop) {
+        throw new BadRequestException(SHOP_NOT_FOUND);
+      }
+
+      // Delete associated images from storage if they exist
+      if (shop.coverImage) {
+        const coverImageKey = this.storageService.extractS3Key(shop.coverImage);
+        if (coverImageKey) {
+          await this.storageService.deleteFile(coverImageKey);
+        }
+      }
+      if (shop.logo) {
+        const logoKey = this.storageService.extractS3Key(shop.logo);
+        if (logoKey) {
+          await this.storageService.deleteFile(logoKey);
+        }
+      }
+
+      await this.shopRepository.remove(shop);
+      return { message: 'Shop deleted permanently' };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
 }
