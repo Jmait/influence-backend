@@ -10,6 +10,7 @@ import { Customer } from '../customers/entities/customer.entity';
 import { User } from '../user/entities/user.entity';
 import { Campaigns } from '../campaign/entities/campaign.entity';
 import { InfluencerProfile } from '../influencers/entities/influencer.entity';
+import { AdminOrderManagementController } from './controller/order.admin.controller';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { InfluencerProfile } from '../influencers/entities/influencer.entity';
     ]),
     PaymentModule,
   ],
-  controllers: [OrdersController],
+  controllers: [OrdersController, AdminOrderManagementController],
   providers: [OrdersService],
   exports: [OrdersService],
 })
