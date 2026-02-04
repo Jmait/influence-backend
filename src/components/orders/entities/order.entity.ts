@@ -38,6 +38,12 @@ export class Order {
   @Column({ type: 'timestamp', nullable: true })
   deliveredAt: Date;
 
+  @Column({ type: 'timestamp', nullable: true })
+  cancelledAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  returnedAt: Date;
+
   @Column('decimal')
   totalPrice: number;
 

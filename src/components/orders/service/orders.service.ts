@@ -8,7 +8,7 @@ import {
   UpdateOrderStatusDto,
 } from '../dto/order.dto';
 import { Product } from 'src/components/products/entities/product.entity';
-import { OrderItem } from '../entities/order-items.entity';
+import { OrderItem, OrderStatus } from '../entities/order-items.entity';
 import { PaymentService } from 'src/components/payment/service/payment.service';
 import { Customer } from 'src/components/customers/entities/customer.entity';
 import { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
@@ -247,6 +247,234 @@ export class OrdersService {
       return await this.orderRepo.findOne({
         where: { orderId },
       });
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  // Admin methods
+  async getOrdersForAdmin(options: ProfileRequestOptions) {
+    try {
+      let query = this.orderRepo
+        .createQueryBuilder('order')
+        .leftJoinAndSelect('order.items', 'items')
+        .leftJoinAndSelect('order.customer', 'customer')
+        .leftJoinAndSelect('order.shippingAddress', 'shippingAddress')
+        .leftJoin('order.customer.influencerProfile', 'influencerProfile')
+        .addSelect(['influencerProfile.influencerProfileId', 'influencerProfile.username'])
+        .orderBy('order.createdAt', 'DESC');
+
+      if (options.query.q) {
+        query = query.andWhere(
+          'order.reference ILIKE :search OR customer.firstName ILIKE :search OR customer.lastName ILIKE :search OR customer.email ILIKE :search',
+          { search: `%${options.query.q}%` },
+        );
+      }
+
+      if (options.query.status) {
+        query = query.andWhere('order.status = :status', {
+          status: options.query.status,
+        });
+      }
+
+      if (options.query.paymentStatus) {
+        query = query.andWhere('order.paymentStatus = :paymentStatus', {
+          paymentStatus: options.query.paymentStatus,
+        });
+      }
+
+      const [orders, count] = await query.getManyAndCount();
+      return { orders, count };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async getOrderStatsForAdmin() {
+    try {
+      const [pending, shipped, inProgress, delivered, cancelled, returned, total, revenue] = await Promise.all([
+        this.orderRepo.count({ where: { status: OrderStatus.PENDING } }),
+        this.orderRepo.count({ where: { status: OrderStatus.SHIPPED } }),
+        this.orderRepo.count({ where: { status: OrderStatus.IN_PROGRESS } }),
+        this.orderRepo.count({ where: { status: OrderStatus.DELIVERED } }),
+        this.orderRepo.count({ where: { status: OrderStatus.CANCELLED } }),
+        this.orderRepo
+          .createQueryBuilder('order')
+          .where('order.returnedAt IS NOT NULL')
+          .getCount(),
+        this.orderRepo.count(),
+        this.orderRepo
+          .createQueryBuilder('order')
+          .select('SUM(order.totalPrice)', 'total')
+          .where('order.paymentStatus = :status', { status: 'SUCCESS' })
+          .getRawOne(),
+      ]);
+
+      return {
+        statusCounts: {
+          pending,
+          shipped,
+          inProgress,
+          delivered,
+          cancelled,
+        },
+        returned,
+        total,
+        totalRevenue: Number.parseFloat(revenue?.total) || 0,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async getOrderDetailsForAdmin(orderId: string) {
+    try {
+      const order = await this.orderRepo.findOne({
+        where: { orderId },
+        relations: ['items', 'customer', 'customer.influencerProfile', 'shippingAddress'],
+      });
+      if (!order) {
+        throw new BadRequestException(ORDER_NOT_FOUND);
+      }
+      return order;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async getTotalSuccessfulOrdersRevenue() {
+    try {
+      const result = await this.orderRepo
+        .createQueryBuilder('order')
+        .select('SUM(order.totalPrice)', 'totalRevenue')
+        .addSelect('COUNT(order.orderId)', 'orderCount')
+        .where('order.paymentStatus = :status', { status: 'SUCCESS' })
+        .getRawOne();
+
+      return {
+        totalRevenue: Number.parseFloat(result?.totalRevenue) || 0,
+        orderCount: Number.parseInt(result?.orderCount) || 0,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async cancelOrderByAdmin(orderId: string) {
+    try {
+      const order = await this.orderRepo.findOne({
+        where: { orderId },
+      });
+      if (!order) {
+        throw new BadRequestException(ORDER_NOT_FOUND);
+      }
+
+      if (order.status === OrderStatus.DELIVERED) {
+        throw new BadRequestException('Cannot cancel a delivered order');
+      }
+
+      const updateData: any = {
+        status: OrderStatus.CANCELLED,
+        cancelledAt: new Date(),
+      };
+      await this.orderRepo.update(orderId, updateData);
+
+      return {
+        message: 'Order cancelled successfully',
+        order: await this.orderRepo.findOne({ where: { orderId } }),
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async updateOrderStatusByAdmin(orderId: string, body: UpdateOrderStatusDto) {
+    try {
+      const order = await this.orderRepo.findOne({
+        where: { orderId },
+      });
+      if (!order) {
+        throw new BadRequestException(ORDER_NOT_FOUND);
+      }
+
+      const updateData: any = { status: body.status };
+
+      // Set appropriate timestamps based on status
+      if (body.status === OrderStatus.DELIVERED) {
+        updateData.deliveredAt = new Date();
+      } else if (body.status === OrderStatus.CANCELLED) {
+        updateData.cancelledAt = new Date();
+      }
+
+      await this.orderRepo.update(orderId, updateData);
+
+      return {
+        message: 'Order status updated successfully',
+        order: await this.orderRepo.findOne({ where: { orderId } }),
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async markOrderAsReturned(orderId: string) {
+    try {
+      const order = await this.orderRepo.findOne({
+        where: { orderId },
+      });
+      if (!order) {
+        throw new BadRequestException(ORDER_NOT_FOUND);
+      }
+
+      if (order.status !== OrderStatus.DELIVERED) {
+        throw new BadRequestException(
+          'Only delivered orders can be marked as returned',
+        );
+      }
+
+      const updateData: any = { returnedAt: new Date() };
+      await this.orderRepo.update(orderId, updateData);
+
+      return {
+        message: 'Order marked as returned successfully',
+        order: await this.orderRepo.findOne({ where: { orderId } }),
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async getRevenueByInfluencer() {
+    try {
+      const result = await this.orderRepo
+        .createQueryBuilder('order')
+        .leftJoin(
+          'influencer_profiles',
+          'influencer',
+          'influencer.influencerProfileId = order.influencerId',
+        )
+        .leftJoin('users', 'user', 'user.userId = influencer.userId')
+        .select('order.influencerId', 'influencerId')
+        .addSelect('influencer.username', 'username')
+        .addSelect('user.firstName', 'firstName')
+        .addSelect('user.lastName', 'lastName')
+        .addSelect('SUM(order.totalPrice)', 'totalRevenue')
+        .addSelect('COUNT(order.orderId)', 'orderCount')
+        .where('order.paymentStatus = :status', { status: 'SUCCESS' })
+        .groupBy('order.influencerId')
+        .addGroupBy('influencer.username')
+        .addGroupBy('user.firstName')
+        .addGroupBy('user.lastName')
+        .orderBy('totalRevenue', 'DESC')
+        .getRawMany();
+
+      return result.map((item) => ({
+        influencerId: item.influencerId,
+        username: item.username,
+        name: `${item.firstName} ${item.lastName}`,
+        totalRevenue: Number.parseFloat(item.totalRevenue) || 0,
+        orderCount: Number.parseInt(item.orderCount) || 0,
+      }));
     } catch (error) {
       throw new BadRequestException(error.message);
     }

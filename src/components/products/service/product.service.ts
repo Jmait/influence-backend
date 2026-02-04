@@ -7,7 +7,6 @@ import { ProfileRequestOptions } from 'src/shared/interface/shared.interface';
 import { ProductVariants } from '../entities/product-variants.entity';
 import { PRODUCT_NOT_FOUND } from 'src/shared/utils/error.utils';
 import { StorageService } from 'src/components/storage/storage.service';
-import { console } from 'inspector';
 
 @Injectable()
 export class ProductsService {
@@ -18,21 +17,103 @@ export class ProductsService {
   ) {}
 
   buildProductFilter(query: any) {
-    const filters = {};
-    if (query.name) {
-      filters['name'] = query.name;
+    const where: { sql: string; params: any }[] = [];
+
+    // Product name search
+    if (query.q) {
+      where.push({
+        sql: 'product.name ILIKE :name',
+        params: { name: `%${query.q}%` },
+      });
     }
+
+    // Shop filter
     if (query.shopId) {
-      filters['shopId'] = query.shopId;
+      where.push({
+        sql: 'product.shopId = :shopId',
+        params: { shopId: query.shopId },
+      });
     }
-    return filters;
+
+    // Influencer filter
+    if (query.influencerId) {
+      where.push({
+        sql: 'product.influencerId = :influencerId',
+        params: { influencerId: query.influencerId },
+      });
+    }
+
+    // Category filter
+    if (query.categoryId) {
+      where.push({
+        sql: 'product.categoryId = :categoryId',
+        params: { categoryId: query.categoryId },
+      });
+    }
+
+    // Multiple categories
+    if (query.categoryIds?.length > 0) {
+      where.push({
+        sql: 'product.categoryId IN (:...categoryIds)',
+        params: { categoryIds: query.categoryIds },
+      });
+    }
+
+    // Subcategory filter
+    if (query.subCategoryId) {
+      where.push({
+        sql: 'product.subCategoryId = :subCategoryId',
+        params: { subCategoryId: query.subCategoryId },
+      });
+    }
+
+    // Active status filter
+    if (query.isActive !== undefined) {
+      where.push({
+        sql: 'product.isActive = :isActive',
+        params: { isActive: query.isActive },
+      });
+    }
+
+    // Price range filters
+    if (query.minPrice !== undefined) {
+      where.push({
+        sql: 'product.price >= :minPrice',
+        params: { minPrice: query.minPrice },
+      });
+    }
+
+    if (query.maxPrice !== undefined) {
+      where.push({
+        sql: 'product.price <= :maxPrice',
+        params: { maxPrice: query.maxPrice },
+      });
+    }
+
+    // Rating filter
+    if (query.minRating !== undefined) {
+      where.push({
+        sql: 'product.rating >= :minRating',
+        params: { minRating: query.minRating },
+      });
+    }
+
+    // In stock filter (quantity > 0)
+    if (query.inStock === true || query.inStock === 'true') {
+      where.push({
+        sql: 'product.quantity > 0',
+        params: {},
+      });
+    }
+
+    return where;
   }
   async getAllProducts(
     options: ProfileRequestOptions,
   ): Promise<{ records: Product[]; counts: number }> {
     const { query, pagination } = options;
     const { limit, offset } = pagination;
-    const filters = this.buildProfileSearchFilter(options.query);
+    const filters = this.buildProductFilter(options.query);
     const products = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.shop', 'shop')
@@ -45,7 +126,7 @@ export class ProductsService {
     if (query) {
       filters.forEach((filter) => products.andWhere(filter.sql, filter.params));
       if (query.sort) {
-        this.applySorting(products, query.sort);
+        this.applyProductSorting(products, query.sort);
       }
     }
     const [records, counts] = await products.getManyAndCount();
@@ -74,7 +155,7 @@ export class ProductsService {
     if (query) {
       filters.forEach((filter) => products.andWhere(filter.sql, filter.params));
       if (query.sort) {
-        this.applySorting(products, query.sort);
+        this.applyProductSorting(products, query.sort);
       }
     }
     const [records, counts] = await products.getManyAndCount();
@@ -165,12 +246,72 @@ export class ProductsService {
     }
   }
 
+  private async updateVariants(
+    transactionalEntityManager: any,
+    variants: any[],
+    productId: string,
+  ) {
+    if (variants && variants.length > 0) {
+      for (const variantData of variants) {
+        const variant = transactionalEntityManager.create(ProductVariants, {
+          ...variantData,
+          productId: productId,
+        });
+        await transactionalEntityManager.save(variant);
+      }
+    }
+  }
+
+  private async uploadProductImages(
+    files: Express.Multer.File[],
+    product: Product,
+    transactionalEntityManager: any,
+  ): Promise<void> {
+    if (!files || files.length === 0) return;
+
+    const uploadedImages: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = this.storageService.getFileByField(
+        `productImage_${i}`,
+        files,
+      );
+      if (file) {
+        const fileUrl = (
+          await this.storageService.uploadPublicFiles(file.buffer, {
+            userId: product.influencerId,
+            service: 'products',
+            folder: 'product-images',
+            file_name: `${file.originalname}-${product.productId}`,
+            content_type: file.mimetype,
+          })
+        ).file_url;
+        uploadedImages.push(fileUrl);
+
+        // Delete old image if exists
+        if (product.images?.[i]) {
+          const existingImageKey = this.storageService.extractS3Key(
+            product.images[i],
+          );
+          const newImageKey = this.storageService.extractS3Key(fileUrl);
+          if (existingImageKey && existingImageKey !== newImageKey) {
+            await this.storageService.deleteFile(existingImageKey);
+          }
+        }
+      }
+    }
+
+    if (uploadedImages.length > 0) {
+      await transactionalEntityManager.update(Product, product.productId, {
+        images: uploadedImages,
+      });
+    }
+  }
+
   async update(
     productId: string,
     body: UpdateProductDto,
     files: Express.Multer.File[],
   ): Promise<Product | null> {
-    console.log('hello update');
     try {
       const product = await this.productRepository.findOne({
         where: { productId },
@@ -178,7 +319,7 @@ export class ProductsService {
       if (!product) {
         throw new BadRequestException(PRODUCT_NOT_FOUND);
       }
-      const profileId = product.influencerId;
+
       const { variants, ...other } = body;
       return await this.productRepository.manager.transaction(
         async (transactionalEntityManager) => {
@@ -188,54 +329,17 @@ export class ProductsService {
             { ...other },
           );
 
-          if (body.variants && body.variants.length > 0) {
-            for (const variantData of body.variants) {
-              const variant = transactionalEntityManager.create(
-                ProductVariants,
-                {
-                  ...variantData,
-                  productId: product.productId,
-                },
-              );
-              await transactionalEntityManager.save(variant);
-            }
-          }
-          const uploadedImages: string[] = [];
-          if (files && files.length > 0) {
-            for (let i = 0; i < files.length; i++) {
-              const file = this.storageService.getFileByField(
-                `productImage_${i}`,
-                files,
-              );
-              if (file) {
-                console.log('Uploaded images:', uploadedImages);
-                const fileUrl = (
-                  await this.storageService.uploadPublicFiles(file.buffer, {
-                    userId: profileId,
-                    service: 'products',
-                    folder: 'product-images',
-                    file_name: `${file.originalname}-${product.productId}`,
-                    content_type: file.mimetype,
-                  })
-                ).file_url;
-                uploadedImages.push(fileUrl);
-              }
-              if (uploadedImages.length > 0) {
-                await transactionalEntityManager.update(Product, productId, {
-                  images: uploadedImages,
-                });
-                const newImageKey = this.storageService.extractS3Key(
-                  uploadedImages[i],
-                );
-                const existingImageKey = this.storageService.extractS3Key(
-                  product.images[i],
-                );
-                if (existingImageKey && existingImageKey != newImageKey) {
-                  await this.storageService.deleteFile(existingImageKey);
-                }
-              }
-            }
-          }
+          await this.updateVariants(
+            transactionalEntityManager,
+            variants || [],
+            product.productId,
+          );
+          await this.uploadProductImages(
+            files,
+            product,
+            transactionalEntityManager,
+          );
+
           return await this.productRepository.findOne({
             where: { productId: productId },
             relations: ['variants'],
@@ -327,6 +431,46 @@ export class ProductsService {
     }
 
     return where;
+  }
+
+  applyProductSorting(qb: SelectQueryBuilder<any>, sort?: string) {
+    console.log('Applying product sorting:', sort);
+    switch (sort) {
+      case 'newest':
+        qb.orderBy('product.productId', 'DESC');
+        break;
+
+      case 'price_asc':
+        qb.orderBy('product.price', 'ASC');
+        break;
+
+      case 'price_desc':
+        qb.orderBy('product.price', 'DESC');
+        break;
+
+      case 'rating_desc':
+        qb.orderBy('product.rating', 'DESC');
+        break;
+
+      case 'rating_asc':
+        qb.orderBy('product.rating', 'ASC');
+        break;
+
+      case 'alphabetical':
+        qb.orderBy('product.name', 'ASC');
+        break;
+
+      case 'quantity_desc':
+        qb.orderBy('product.quantity', 'DESC');
+        break;
+
+      case 'quantity_asc':
+        qb.orderBy('product.quantity', 'ASC');
+        break;
+
+      default:
+        qb.orderBy('product.productId', 'DESC');
+    }
   }
 
   applySorting(qb: SelectQueryBuilder<any>, sort?: string) {
