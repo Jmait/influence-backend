@@ -260,8 +260,7 @@ export class OrdersService {
         .leftJoinAndSelect('order.items', 'items')
         .leftJoinAndSelect('order.customer', 'customer')
         .leftJoinAndSelect('order.shippingAddress', 'shippingAddress')
-        .leftJoin('order.customer.influencerProfile', 'influencerProfile')
-        .addSelect(['influencerProfile.influencerProfileId', 'influencerProfile.username'])
+        .leftJoinAndSelect('customer.influencerProfile', 'influencerProfile')
         .orderBy('order.createdAt', 'DESC');
 
       if (options.query.q) {
@@ -329,10 +328,14 @@ export class OrdersService {
 
   async getOrderDetailsForAdmin(orderId: string) {
     try {
-      const order = await this.orderRepo.findOne({
-        where: { orderId },
-        relations: ['items', 'customer', 'customer.influencerProfile', 'shippingAddress'],
-      });
+      const order = await this.orderRepo
+        .createQueryBuilder('order')
+        .leftJoinAndSelect('order.items', 'items')
+        .leftJoinAndSelect('order.customer', 'customer')
+        .leftJoinAndSelect('order.shippingAddress', 'shippingAddress')
+        .leftJoinAndSelect('customer.influencerProfile', 'influencerProfile')
+        .where('order.orderId = :orderId', { orderId })
+        .getOne();
       if (!order) {
         throw new BadRequestException(ORDER_NOT_FOUND);
       }
