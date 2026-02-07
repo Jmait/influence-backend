@@ -255,13 +255,23 @@ export class OrdersService {
   // Admin methods
   async getOrdersForAdmin(options: ProfileRequestOptions) {
     try {
+      const { pagination } = options;
       let query = this.orderRepo
         .createQueryBuilder('order')
         .leftJoinAndSelect('order.items', 'items')
         .leftJoinAndSelect('order.customer', 'customer')
         .leftJoinAndSelect('order.shippingAddress', 'shippingAddress')
         .leftJoinAndSelect('customer.influencerProfile', 'influencerProfile')
-        .orderBy('order.createdAt', 'DESC');
+        .leftJoinAndMapOne(
+          'order.influencerProfile',
+          InfluencerProfile,
+          'sellerProfile',
+          'sellerProfile.influencerProfileId = order.influencerId',
+        )
+        .leftJoinAndSelect('sellerProfile.user', 'sellerUser')
+        .orderBy('order.createdAt', 'DESC')
+        .take(pagination.limit)
+        .skip(pagination.offset);
 
       if (options.query.q) {
         query = query.andWhere(
@@ -334,6 +344,13 @@ export class OrdersService {
         .leftJoinAndSelect('order.customer', 'customer')
         .leftJoinAndSelect('order.shippingAddress', 'shippingAddress')
         .leftJoinAndSelect('customer.influencerProfile', 'influencerProfile')
+        .leftJoinAndMapOne(
+          'order.influencerProfile',
+          InfluencerProfile,
+          'sellerProfile',
+          'sellerProfile.influencerProfileId = order.influencerId',
+        )
+        .leftJoinAndSelect('sellerProfile.user', 'sellerUser')
         .where('order.orderId = :orderId', { orderId })
         .getOne();
       if (!order) {
